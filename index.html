@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="qrcode.js"></script>
 <style>
 :root{
   --bg:#0a0e11; --bg2:#121b20; --bg3:#18242b; --line:#213139; --line2:#2c4049;
@@ -268,7 +268,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
       </div>
     </div>
     <div id="data-view">
-    <div id="offline-note" class="offline-note hidden">Offline – es werden zuletzt gespeicherte Daten angezeigt. Änderungen sind erst wieder online möglich.</div>
+    <div id="offline-note" class="offline-note hidden">Offline – es werden zuletzt gespeicherte Daten angezeigt. Neue Einträge sowie Änderungen und Löschungen werden lokal gemerkt und automatisch synchronisiert, sobald du wieder online bist.</div>
     <!-- hero stats -->
     <div class="hero" id="hero"></div>
 
@@ -377,6 +377,7 @@ document.body.innerHTML = document.body.innerHTML
 // ---------- Helpers ----------
 const $ = s => document.querySelector(s);
 const CFG_KEY='tanklog_cfg', RATE_KEY='tanklog_eurchf';
+const ALLOW_REGISTER=false; // Einzelnutzer-Setup: In-App-Registrieren ausblenden (auf true setzen, falls je ein zweiter Account nötig)
 const nf = (n,d=2)=> new Intl.NumberFormat('de-CH',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
 const money = (n,c)=> c+' '+nf(n,2);
 function show(id){['screen-config','screen-auth','screen-app'].forEach(s=>$('#'+s).classList.add('hidden'));$('#'+id).classList.remove('hidden');}
@@ -412,6 +413,7 @@ $('#auth-toggle').onclick = ()=>{
   $('#auth-toggle').textContent = authMode==='in'?'Noch kein Konto? Registrieren':'Schon ein Konto? Anmelden';
   msg($('#auth-msg'),'',null);
 };
+if(!ALLOW_REGISTER){ const _at=$('#auth-toggle'); if(_at) _at.style.display='none'; }
 $('#auth-reset').onclick = resetCfg;
 $('#auth-go').onclick = async ()=>{
   const email=$('#auth-email').value.trim(), pass=$('#auth-pass').value;
@@ -445,7 +447,7 @@ async function loadData(){
   loadError=!!error;
   if(!error && data){ ENTRIES=data; try{ localStorage.setItem('tanklog_cache', JSON.stringify(data)); }catch(e){} }
   else { let c=[]; try{ c=JSON.parse(localStorage.getItem('tanklog_cache')||'[]'); }catch(e){} ENTRIES=c; }
-  loadQueue().forEach(it=> ENTRIES.push(Object.assign({}, it.obj, {id:it.id, _pending:true})));
+  applyQueueToEntries();
   if(!error && ENTRIES.some(e=>e.waehrung==='EUR')){ try{ await ensureRate(); }catch(e){} }
   if(error) toast('err', ENTRIES.length?'Offline – zeige zuletzt gespeicherte Daten.':'Konnte Daten nicht laden (offline?).');
   computeAndRender();
@@ -529,7 +531,7 @@ function rowHtml(e){
           ${e._v!=null?`<span class="chip v">${nf(e._v,1)} L/100km</span>`:''}
           ${e.vollgetankt?'':'<span class="chip">Teiltankung</span>'}
           ${e.ort?`<span class="chip">${escapeHtml(e.ort)}</span>`:''}
-          ${e._pending?'<span class="chip" style="color:var(--amber);border-color:rgba(227,168,91,.4);background:var(--amber-soft)">wird synchronisiert</span>':''}
+          ${e._pending?`<span class="chip" style="color:var(--amber);border-color:rgba(227,168,91,.4);background:var(--amber-soft)">${e._pendingOp==='update'?'Änderung wartet':'wird synchronisiert'}</span>`:''}
         </div>
       </div>
       <div class="r2">
@@ -547,8 +549,8 @@ function renderList(query){
     if(query){ const d=new Date(e.datum+'T00:00:00').toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'}); const hay=(d+' '+e.waehrung+' '+(e.ort||'')+' '+nf(e.km_stand,0)+' '+nf(e.liter,2)+' '+nf(e.total,2)).toLowerCase(); if(hay.indexOf(query)<0) return; }
     shown++;
     const row=document.createElement('div'); row.className='row'; row.innerHTML=rowHtml(e);
-    row.onclick=(ev)=>{ if(ev.target.closest('.del')) return; if(e._pending) return; openEdit(e); };
-    const _db=row.querySelector('.del'); if(_db) _db.onclick=(ev)=>{ ev.stopPropagation(); delEntry(e.id); };
+    row.onclick=(ev)=>{ if(ev.target.closest('.del')) return; openEdit(e); };
+    const _db=row.querySelector('.del'); if(_db) _db.onclick=(ev)=>{ ev.stopPropagation(); discardPending(e.id); };
     list.appendChild(row);
   });
   if(query && !shown) list.innerHTML='<div class="empty">Keine Treffer für „'+escapeHtml(query)+'".</div>';
@@ -648,19 +650,24 @@ $('#f-save').onclick=async()=>{
   if(warnings.length && !savePending){ msg($('#add-msg'),'err','\u26A0 '+warnings.join(' ')+' \u2013 nochmals tippen zum Speichern.'); savePending=true; $('#f-save').textContent='Trotzdem speichern'; return; }
   const total=isNaN(v.total)?+(v.liter*v.preis).toFixed(2):v.total;
   const obj={datum:v.datum,km_stand:v.km,liter:v.liter,literpreis:v.preis,total,waehrung:v.cur,vollgetankt:v.voll,ort:v.ort};
+  // Bearbeitung einer noch nicht synchronisierten Offline-Neuanlage: nie zum Server, nur die Queue anpassen
+  if(editingId && isPendingId(editingId)){
+    queueUpdate(editingId, obj); savePending=false;
+    $('#add-overlay').classList.add('hidden'); await loadData(); return;
+  }
   $('#f-save').disabled=true;
   try{
-    if(editingId){ const {error}=await sb.from('tankungen').update(obj).eq('id',editingId); if(error) throw error; }
+    if(editingId){ const {error}=await sb.from('tankungen').update(obj).eq('id',editingId); if(error) throw error; unqueueOps(editingId); }
     else { const {error}=await sb.from('tankungen').insert(obj); if(error) throw error; }
     $('#f-save').disabled=false; savePending=false;
     $('#add-overlay').classList.add('hidden');
     await loadData();
   }catch(err){
     $('#f-save').disabled=false;
-    if(!editingId && (!navigator.onLine || /fetch|network|failed/i.test(err.message||''))){
-      const pid=queueAdd(obj); savePending=false;
-      ENTRIES.push(Object.assign({}, obj, {id:pid, _pending:true}));
-      $('#add-overlay').classList.add('hidden'); computeAndRender();
+    if(isOfflineErr(err)){
+      if(editingId){ queueUpdate(editingId, obj); } else { queueAdd(obj); }
+      savePending=false; $('#add-overlay').classList.add('hidden'); await loadData();
+      toast('ok', editingId?'Offline – Änderung wird synchronisiert.':'Offline – Eintrag wird synchronisiert.');
       return;
     }
     msg($('#add-msg'),'err', err.message||'Speichern fehlgeschlagen.');
@@ -668,11 +675,15 @@ $('#f-save').onclick=async()=>{
 };
 
 async function delEntry(id){
-  if(String(id).indexOf('pending')===0){ unqueueAdd(id); ENTRIES=ENTRIES.filter(x=>x.id!==id); computeAndRender(); toast('ok','Offline-Eintrag verworfen.'); return true; }
+  if(isPendingId(id)){ queueDelete(id); ENTRIES=ENTRIES.filter(x=>String(x.id)!==String(id)); computeAndRender(); toast('ok','Offline-Eintrag verworfen.'); return true; }
   if(!await askConfirm('Diese Tankung wirklich löschen?','Löschen')) return false;
-  const {error}=await sb.from('tankungen').delete().eq('id',id);
-  if(error){ toast('err',error.message); return false; }
-  await loadData(); toast('ok','Tankung gelöscht.'); return true;
+  try{
+    const {error}=await sb.from('tankungen').delete().eq('id',id); if(error) throw error;
+    unqueueOps(id); await loadData(); toast('ok','Tankung gelöscht.'); return true;
+  }catch(err){
+    if(isOfflineErr(err)){ queueDelete(id); await loadData(); toast('ok','Offline – Löschung wird synchronisiert.'); return true; }
+    toast('err', err.message||'Löschen fehlgeschlagen.'); return false;
+  }
 }
 
 // ---------- Settings ----------
@@ -681,7 +692,7 @@ function openSet(){
   { const er=effectiveRate(); $('#set-rate').placeholder = (er&&er.src==='auto')?('automatisch: '+nf(er.rate,3)+(er.date?(' · '+er.date.split('-').reverse().join('.')):'')):'automatisch (leer lassen)'; }
   $('#set-overlay').classList.remove('hidden');
   _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#set-close'); if(c) c.focus(); },60);
-  try{ QRCode.toCanvas($('#qr'), location.href, {width:180,margin:1,color:{dark:'#0b1012',light:'#ffffff'}}); }catch(e){}
+  drawQR($('#qr'), location.href);
 }
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
 $('#set-close').onclick=()=>$('#set-overlay').classList.add('hidden');
@@ -800,17 +811,66 @@ function openEdit(e){
   $('#f-ort').value=e.ort||'';
   $('#f-total').value=Number(e.total).toFixed(2); $('#s-total').textContent=curSel;
   msg($('#add-msg'),'',null); $('#scan-status').className='scan-status';
-  { const _fd=$('#f-delete'); if(_fd) _fd.style.display=''; }
+  { const _fd=$('#f-delete'); if(_fd){ _fd.style.display=''; _fd.textContent=isPendingId(e.id)?'Eintrag verwerfen':'Tankung löschen'; } }
   $('#add-overlay').classList.remove('hidden');
   _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#add-close'); if(c) c.focus(); },60);
 }
 
-// Offline-Warteschlange
-function loadQueue(){ try{ return JSON.parse(localStorage.getItem('tanklog_queue')||'[]'); }catch(e){ return []; } }
+// Offline-Warteschlange (Operations-Log: add / update / delete)
+function isPendingId(id){ return String(id).indexOf('pending')===0; }
+function isOfflineErr(err){ return !navigator.onLine || /fetch|network|failed|load failed|timeout|connection/i.test((err&&err.message)||''); }
+function loadQueue(){
+  try{
+    const arr=JSON.parse(localStorage.getItem('tanklog_queue')||'[]');
+    // Migration altes Format {id,obj} -> {op:'add',id,obj}
+    return arr.map(it=> it && it.op ? it : {op:'add', id:it.id, obj:it.obj});
+  }catch(e){ return []; }
+}
 function saveQueue(q){ localStorage.setItem('tanklog_queue', JSON.stringify(q)); }
-function queueAdd(obj){ const q=loadQueue(); const id='pending-'+Date.now()+'-'+Math.floor(Math.random()*1000); q.push({id,obj}); saveQueue(q); return id; }
-function unqueueAdd(id){ saveQueue(loadQueue().filter(x=>x.id!==id)); }
-async function flushQueue(){ let q=loadQueue(); if(!q.length||!sb) return; const rest=[]; for(const it of q){ try{ const {error}=await sb.from('tankungen').insert(it.obj); if(error) throw error; }catch(e){ rest.push(it); } } saveQueue(rest); }
+function pendingOpFor(id){ const o=loadQueue().find(x=>String(x.id)===String(id)); return o?o.op:null; }
+function queueAdd(obj){ const q=loadQueue(); const id='pending-'+Date.now()+'-'+Math.floor(Math.random()*1000); q.push({op:'add',id,obj}); saveQueue(q); return id; }
+function queueUpdate(id,obj){
+  const q=loadQueue();
+  if(isPendingId(id)){ // Bearbeitung einer noch nicht synchronisierten Neuanlage -> Add direkt anpassen
+    const a=q.find(o=>o.op==='add'&&String(o.id)===String(id)); if(a){ a.obj=obj; } else { q.push({op:'add',id,obj}); }
+  } else {
+    const u=q.find(o=>o.op==='update'&&String(o.id)===String(id)); if(u){ u.obj=obj; } else { q.push({op:'update',id,obj}); }
+  }
+  saveQueue(q);
+}
+function queueDelete(id){
+  let q=loadQueue();
+  if(isPendingId(id)){ q=q.filter(o=>!(o.op==='add'&&String(o.id)===String(id))); } // Offline-Neuanlage einfach verwerfen
+  else { q=q.filter(o=>!(o.op==='update'&&String(o.id)===String(id))); q.push({op:'delete',id}); } // Update wird vom Delete abgelöst
+  saveQueue(q);
+}
+function unqueueOps(id){ saveQueue(loadQueue().filter(o=>String(o.id)!==String(id))); } // alle wartenden Ops dieser Zeile entfernen
+// wartende Ops auf die geladenen Server-/Cache-Daten anwenden, damit die Ansicht offline & nach Reload stimmt
+function applyQueueToEntries(){
+  const q=loadQueue();
+  const delIds=new Set(q.filter(o=>o.op==='delete').map(o=>String(o.id)));
+  if(delIds.size) ENTRIES=ENTRIES.filter(e=>!delIds.has(String(e.id)));
+  q.filter(o=>o.op==='update').forEach(o=>{ const row=ENTRIES.find(e=>String(e.id)===String(o.id)); if(row) Object.assign(row,o.obj,{_pending:true,_pendingOp:'update'}); });
+  q.filter(o=>o.op==='add').forEach(o=> ENTRIES.push(Object.assign({},o.obj,{id:o.id,_pending:true,_pendingOp:'add'})));
+}
+// wartende Änderung verwerfen (Inline-Button „verwerfen")
+async function discardPending(id){
+  const op=pendingOpFor(id);
+  unqueueOps(id);
+  if(op==='add'){ ENTRIES=ENTRIES.filter(x=>String(x.id)!==String(id)); computeAndRender(); toast('ok','Offline-Eintrag verworfen.'); }
+  else { await loadData(); toast('ok','Änderung verworfen.'); }
+}
+async function flushQueue(){
+  let q=loadQueue(); if(!q.length||!sb) return; const rest=[];
+  for(const it of q){
+    try{
+      if(it.op==='add'){ const {error}=await sb.from('tankungen').insert(it.obj); if(error) throw error; }
+      else if(it.op==='update'){ const {error}=await sb.from('tankungen').update(it.obj).eq('id',it.id); if(error) throw error; }
+      else if(it.op==='delete'){ const {error}=await sb.from('tankungen').delete().eq('id',it.id); if(error) throw error; }
+    }catch(e){ rest.push(it); }
+  }
+  saveQueue(rest);
+}
 window.addEventListener('online', ()=>{ if(sb){ flushQueue().then(()=>loadData()); } });
 
 // CSV-Import
@@ -871,8 +931,24 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
 let _ascCache=[], _toastT=null;
 function toast(type,txt){ const el=$('#toast'); if(!el) return; el.className='toast '+type; el.textContent=txt; el.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove('show'),3200); }
 function askConfirm(text,yes){ return new Promise(res=>{ const ov=$('#confirm-overlay'); $('#confirm-msg').textContent=text; $('#confirm-yes').textContent=yes||'OK'; ov.classList.remove('hidden'); setTimeout(()=>{ const n=$('#confirm-no'); if(n) n.focus(); },50); const done=v=>{ ov.classList.add('hidden'); res(v); }; $('#confirm-yes').onclick=()=>done(true); $('#confirm-no').onclick=()=>done(false); }); }
-(function(){ const ls=$('#list-search'); if(ls) ls.oninput=()=>renderList(ls.value); })();
-function ensureHeic(){ return new Promise((res,rej)=>{ if(window.heic2any) return res(); const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('HEIC-Umwandlung nicht verfügbar (offline?).')); document.head.appendChild(sc); }); }
+function debounce(fn,ms){ let t; return function(){ const a=arguments, c=this; clearTimeout(t); t=setTimeout(()=>fn.apply(c,a),ms); }; }
+(function(){ const ls=$('#list-search'); if(ls){ const run=debounce(()=>renderList(ls.value),150); ls.oninput=run; } })();
+// QR-Code lokal auf Canvas zeichnen (kleiner eigenständiger Generator, offline-fähig)
+function drawQR(canvas,text){
+  if(!canvas || typeof qrcode!=='function') return false;
+  try{
+    const qr=qrcode(0,'M'); qr.addData(text); qr.make();
+    const n=qr.getModuleCount(), quiet=4, target=180, total=n+quiet*2;
+    const scale=Math.max(2, Math.floor(target/total)), px=total*scale, dpr=window.devicePixelRatio||1;
+    canvas.width=px*dpr; canvas.height=px*dpr; canvas.style.width=px+'px'; canvas.style.height=px+'px';
+    const ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,px,px); ctx.fillStyle='#0b1012';
+    for(let r=0;r<n;r++) for(let c=0;c<n;c++){ if(qr.isDark(r,c)) ctx.fillRect((c+quiet)*scale,(r+quiet)*scale,scale,scale); }
+    return true;
+  }catch(e){ return false; }
+}
+// HEIC-Umwandlung: lokal gebündelt, nur bei Bedarf geladen (Foto-Scan braucht ohnehin Netz)
+function ensureHeic(){ return new Promise((res,rej)=>{ if(window.heic2any) return res(); const sc=document.createElement('script'); sc.src='heic2any.min.js'; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('HEIC-Umwandlung nicht verfügbar.')); document.head.appendChild(sc); }); }
 async function heicToJpeg(file){ await ensureHeic(); const out=await window.heic2any({blob:file,toType:'image/jpeg',quality:0.85}); return Array.isArray(out)?out[0]:out; }
 
 
@@ -886,7 +962,7 @@ document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return;
   if(!$('#add-overlay').classList.contains('hidden')){ $('#add-overlay').classList.add('hidden'); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ $('#set-overlay').classList.add('hidden'); return; }
 });
-const APP_VER='v1.1 · 2026-06-01'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.2 · 2026-06-01'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 boot();
 </script>
 <div id="toast" class="toast"></div>

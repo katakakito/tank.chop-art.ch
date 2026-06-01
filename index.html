@@ -304,8 +304,10 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title">
     <div class="sheet-h"><h2 id="add-title">Neue Tankung</h2><button class="x" id="add-close">×</button></div>
     <div id="add-msg"></div>
+    <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none">
     <input type="file" id="f-photo" accept="image/*" style="display:none">
-    <button class="scan-btn" id="scan-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h1.5l1.2-1.8A1 1 0 0 1 8.5 4.7h7a1 1 0 0 1 .8.5L17.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.3"/></svg> Foto scannen <span class="hint">Beleg / Zapfsäule</span></button>
+    <button class="scan-btn" id="scan-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h1.5l1.2-1.8A1 1 0 0 1 8.5 4.7h7a1 1 0 0 1 .8.5L17.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.3"/></svg> Foto aufnehmen <span class="hint">Kamera · Beleg / Zapfsäule</span></button>
+    <button class="scan-btn" id="file-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L6 20"/></svg> Aus Datei wählen <span class="hint">Galerie oder Datei</span></button>
     <div class="scan-status" id="scan-status"></div>
     <div class="two">
       <div class="field"><label class="label" for="f-datum">Datum</label><input class="inp" id="f-datum" type="date"></div>
@@ -714,8 +716,9 @@ $('#export-csv').onclick=()=>{
 
 // ---------- Foto-Scan (Claude Vision, direkt im Browser) ----------
 function scanStatus(type,txt,spin){ const el=$('#scan-status'); el.className='scan-status show '+type; el.innerHTML=(spin?'<span class="spin"></span>':'')+'<span>'+txt+'</span>'; }
-$('#scan-btn').onclick=()=>{ $('#f-photo').value=''; $('#f-photo').click(); };
-$('#f-photo').onchange=async(e)=>{
+$('#scan-btn').onclick=()=>{ const i=$('#f-photo-cam'); i.value=''; i.click(); };
+$('#file-btn').onclick=()=>{ const i=$('#f-photo'); i.value=''; i.click(); };
+async function handlePhoto(e){
   const file=e.target.files&&e.target.files[0]; if(!file) return;
   try{
     scanStatus('work','Foto wird analysiert …', true);
@@ -726,7 +729,9 @@ $('#f-photo').onchange=async(e)=>{
     fillFromScan(o);
     scanStatus('ok','Werte übernommen – bitte KM-Stand ergänzen und prüfen.');
   }catch(err){ scanStatus('err', err.message||'Erkennung fehlgeschlagen.'); }
-};
+}
+$('#f-photo').onchange=handlePhoto;
+$('#f-photo-cam').onchange=handlePhoto;
 function downscale(file,maxDim,q){
   return new Promise((res,rej)=>{
     const img=new Image(); const url=URL.createObjectURL(file);

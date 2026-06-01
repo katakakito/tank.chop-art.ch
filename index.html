@@ -19,7 +19,7 @@
 <style>
 :root{
   --bg:#0a0e11; --bg2:#121b20; --bg3:#18242b; --line:#213139; --line2:#2c4049;
-  --ink:#eaf3f2; --muted:#93a9ad; --faint:#657c81;
+  --ink:#eaf3f2; --muted:#93a9ad; --faint:#83989e;
   --teal:#2dd4bf; --teal-d:#0f766e; --teal-soft:rgba(45,212,191,.13);
   --pink:#ff00aa; --pink-d:#cc0088; --pink-soft:rgba(255,0,170,.13);
   --amber:#e3a85b; --amber-soft:rgba(227,168,91,.13);
@@ -191,6 +191,14 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .confirm-msg{font-size:15px;color:var(--ink);margin:8px 2px 18px;line-height:1.45;text-align:center;}
 .save-btn.danger{background:linear-gradient(135deg,#e36f6f,#c8443d);color:#fff;}
 .loading-row{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--faint);padding:34px 0;font-size:13px;}
+.onboarding{padding:6px 0 8px;}
+.ob-card{background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:34px 24px;text-align:center;margin-top:26px;}
+.ob-ico{width:62px;height:62px;border-radius:17px;background:linear-gradient(135deg,#33e9d4,#0b8c7d);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 10px 24px -8px rgba(45,212,191,.6);}
+.ob-ico svg{width:34px;height:34px;}
+.ob-h{font-family:var(--serif);font-size:23px;margin-bottom:10px;color:var(--ink);}
+.ob-p{color:var(--muted);font-size:13.5px;line-height:1.6;max-width:300px;margin:0 auto 22px;}
+.ob-card .add-btn{margin-bottom:14px;}
+.ob-hint{color:var(--faint);font-size:11.5px;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -205,12 +213,12 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <h2>Einrichtung</h2>
     <p class="lead">Einmalig deine Supabase-Verbindung hinterlegen. Die Werte bleiben nur auf diesem Gerät gespeichert.</p>
     <div id="cfg-msg"></div>
-    <div class="field"><span class="label">Supabase Project URL</span>
+    <div class="field"><label class="label" for="cfg-url">Supabase Project URL</label>
       <input class="inp" id="cfg-url" placeholder="https://xxxx.supabase.co" autocapitalize="off" autocorrect="off"></div>
-    <div class="field"><span class="label">Supabase anon key</span>
-      <input class="inp" id="cfg-key" placeholder="eyJhbGci…" autocapitalize="off" autocorrect="off"></div>
+    <div class="field"><label class="label" for="cfg-key">Supabase Publishable Key (oder anon)</label>
+      <input class="inp" id="cfg-key" placeholder="sb_publishable_…" autocapitalize="off" autocorrect="off"></div>
     <button class="save-btn" id="cfg-save">Verbinden</button>
-    <p class="help">Zu finden im Supabase-Dashboard unter <b>Project Settings → API</b> (Project URL &amp; anon/public key). Der anon-Key ist für den Client gedacht; geschützt wird über RLS.</p>
+    <p class="help">Im Supabase-Dashboard unter <b>Project Settings → API Keys</b>: die <b>Project URL</b> und den <b>Publishable Key</b> (beginnt mit „sb_publishable_") – bei älteren Projekten der <b>anon</b>-Key („eyJ…"). Dieser Schlüssel gehört in den Client; geschützt wird über RLS. Den geheimen secret/service_role-Key nicht verwenden.</p>
   </div>
 </div>
 
@@ -224,9 +232,9 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <h2 id="auth-title">Anmelden</h2>
     <p class="lead" id="auth-lead">Mit deinem Supabase-Konto anmelden.</p>
     <div id="auth-msg"></div>
-    <div class="field"><span class="label">E-Mail</span>
+    <div class="field"><label class="label" for="auth-email">E-Mail</label>
       <input class="inp" id="auth-email" type="email" placeholder="du@example.com" autocapitalize="off" autocorrect="off"></div>
-    <div class="field"><span class="label">Passwort</span>
+    <div class="field"><label class="label" for="auth-pass">Passwort</label>
       <input class="inp" id="auth-pass" type="password" placeholder="••••••••"></div>
     <button class="save-btn" id="auth-go">Anmelden</button>
     <button class="ghost" id="auth-toggle">Noch kein Konto? Registrieren</button>
@@ -240,10 +248,20 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
   <div class="top"><div class="wrap">
     <div class="logo">__PUMP__</div>
     <div class="ttl"><h1>Tank-Log</h1><div class="sub">Renault Mégane Grandtour · 1.2 TCe</div></div>
-    <button class="icon-btn" id="open-settings" title="Einstellungen">__GEAR__</button>
+    <button class="icon-btn" id="open-settings" title="Einstellungen" aria-label="Einstellungen">__GEAR__</button>
   </div></div>
 
   <div class="wrap">
+    <div id="onboarding" class="onboarding hidden">
+      <div class="ob-card">
+        <div class="ob-ico">__PUMP__</div>
+        <h2 class="ob-h">Willkommen bei Tank-Log</h2>
+        <p class="ob-p">Erfasse deine erste Tankung – Ø-Verbrauch, Kosten und Statistik erscheinen danach automatisch. Belege kannst du auch einfach abfotografieren.</p>
+        <button class="add-btn" id="ob-add">__PLUS__ Erste Tankung erfassen</button>
+        <p class="ob-hint">Schon eine Tankliste? Unter Einstellungen → Daten kannst du eine CSV importieren.</p>
+      </div>
+    </div>
+    <div id="data-view">
     <!-- hero stats -->
     <div class="hero" id="hero"></div>
 
@@ -269,6 +287,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
       <button class="tbtn" id="export-csv">__DL__ CSV-Export</button>
       <button class="tbtn" id="open-settings2">__GEAR__ Einstellungen</button>
     </div>
+    </div>
     <div class="footer">Renault Mégane Grandtour</div>
   </div>
 </div>
@@ -282,12 +301,12 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <button class="scan-btn" id="scan-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h1.5l1.2-1.8A1 1 0 0 1 8.5 4.7h7a1 1 0 0 1 .8.5L17.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.3"/></svg> Foto scannen <span class="hint">Beleg / Zapfsäule</span></button>
     <div class="scan-status" id="scan-status"></div>
     <div class="two">
-      <div class="field"><span class="label">Datum</span><input class="inp" id="f-datum" type="date"></div>
-      <div class="field"><span class="label">KM-Stand</span><div class="suffix"><input class="inp" id="f-km" type="number" inputmode="numeric" placeholder="0"><span class="s">km</span></div></div>
+      <div class="field"><label class="label" for="f-datum">Datum</label><input class="inp" id="f-datum" type="date"></div>
+      <div class="field"><label class="label" for="f-km">KM-Stand</label><div class="suffix"><input class="inp" id="f-km" type="text" inputmode="numeric" placeholder="0"><span class="s">km</span></div></div>
     </div>
     <div class="two">
-      <div class="field"><span class="label">Tankmenge</span><div class="suffix"><input class="inp" id="f-liter" type="number" inputmode="decimal" step="0.01" placeholder="0.00"><span class="s">L</span></div></div>
-      <div class="field"><span class="label">Literpreis B95</span><div class="suffix"><input class="inp" id="f-preis" type="number" inputmode="decimal" step="0.001" placeholder="0.000"><span class="s" id="s-preis">CHF/L</span></div></div>
+      <div class="field"><label class="label" for="f-liter">Tankmenge</label><div class="suffix"><input class="inp" id="f-liter" type="text" inputmode="decimal" placeholder="0.00"><span class="s">L</span></div></div>
+      <div class="field"><label class="label" for="f-preis">Literpreis B95</label><div class="suffix"><input class="inp" id="f-preis" type="text" inputmode="decimal" placeholder="0.000"><span class="s" id="s-preis">CHF/L</span></div></div>
     </div>
     <div class="total-line"><span class="label">Total Füllung</span><span class="tv" id="f-total-view">–</span></div>
     <input type="hidden" id="f-total">
@@ -303,7 +322,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
         <button data-full="0">Teil­tankung</button>
       </div>
     </div>
-    <div class="field"><span class="label">Ort / Tankstelle (optional)</span><input class="inp" id="f-ort" placeholder="z. B. Migrol Au SG"></div>
+    <div class="field"><label class="label" for="f-ort">Ort / Tankstelle (optional)</label><input class="inp" id="f-ort" placeholder="z. B. Migrol Au SG"></div>
     <button class="save-btn" id="f-save">Speichern</button>
     <button class="ghost" id="add-cancel">Abbrechen</button>
   </div>
@@ -313,8 +332,8 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 <div id="set-overlay" class="overlay hidden">
   <div class="sheet">
     <div class="sheet-h"><h2>Einstellungen</h2><button class="x" id="set-close">×</button></div>
-    <div class="field"><span class="label">EUR → CHF Kurs (leer = automatisch)</span>
-      <div class="suffix"><input class="inp" id="set-rate" type="number" inputmode="decimal" step="0.001" placeholder="z. B. 0.95"><span class="s">CHF je EUR</span></div>
+    <div class="field"><label class="label" for="set-rate">EUR → CHF Kurs (leer = automatisch)</label>
+      <div class="suffix"><input class="inp" id="set-rate" type="text" inputmode="decimal" placeholder="z. B. 0.95"><span class="s">CHF je EUR</span></div>
       <p class="help">Leer lassen = aktueller Kurs wird automatisch geholt (EZB-Referenz via Frankfurter) und täglich aufgefrischt. Ein eigener Wert überschreibt den automatischen.</p>
     </div>
     <button class="save-btn" id="set-rate-save">Kurs speichern</button>
@@ -339,7 +358,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 // ---------- Icons (injected) ----------
 const I = {
   pump:'<svg viewBox="0 0 24 24" fill="none" stroke="#04201d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v14M4 20h11M15 9h2.2A1.8 1.8 0 0 1 19 10.8V15a1.5 1.5 0 0 0 3 0V8.5L19.5 6"/></svg>',
-  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="#04201d" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>'
 };
@@ -440,6 +459,9 @@ function withConsumption(asc){
 }
 
 function computeAndRender(){
+  const __empty=!ENTRIES.length; const dv=$('#data-view'), ob=$('#onboarding');
+  if(dv) dv.classList.toggle('hidden',__empty); if(ob) ob.classList.toggle('hidden',!__empty);
+  if(__empty) return;
   const asc = withConsumption(ENTRIES.slice().sort((a,b)=>a.km_stand-b.km_stand));
   const er = effectiveRate(); const rate = er?er.rate:NaN;
   // aggregate verbrauch
@@ -591,7 +613,7 @@ function openAdd(){
 }
 function setSeg(sel,attr,val){ document.querySelectorAll(`${sel} button`).forEach(b=>b.classList.toggle('on', b.getAttribute(attr)===String(val))); }
 function recalcTotal(){
-  const l=parseFloat($('#f-liter').value), p=parseFloat($('#f-preis').value);
+  const l=pnum($('#f-liter').value), p=pnum($('#f-preis').value);
   if(!isNaN(l)&&!isNaN(p)){ const t=l*p; $('#f-total').value=t.toFixed(2); $('#f-total-view').textContent=nf(t,2)+' '+curSel; }
   else { $('#f-total').value=''; $('#f-total-view').textContent='–'; }
 }
@@ -644,7 +666,7 @@ function openSet(){
 }
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
 $('#set-close').onclick=()=>$('#set-overlay').classList.add('hidden');
-$('#set-rate-save').onclick=async ()=>{ const v=$('#set-rate').value.trim(); if(v) localStorage.setItem(RATE_KEY,v); else localStorage.removeItem(RATE_KEY); $('#set-overlay').classList.add('hidden'); try{ await ensureRate(); }catch(e){} computeAndRender(); };
+$('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); $('#set-overlay').classList.add('hidden'); try{ await ensureRate(); }catch(e){} computeAndRender(); };
 $('#set-logout').onclick=async()=>{ await sb.auth.signOut(); $('#set-overlay').classList.add('hidden'); show('screen-auth'); };
 $('#set-reset').onclick=resetCfg;
 function resetCfg(){ if(confirm('Supabase-Verbindung auf diesem Gerät entfernen?')){ localStorage.removeItem(CFG_KEY); location.reload(); } }
@@ -730,7 +752,7 @@ async function ensureRate(){
 
 
 // ---------- Bearbeiten / Validierung / Import / Offline ----------
-function gatherForm(){ return { datum:$('#f-datum').value, km:parseInt($('#f-km').value), liter:parseFloat($('#f-liter').value), preis:parseFloat($('#f-preis').value), total:parseFloat($('#f-total').value), cur:curSel, voll:!!fullSel, ort:$('#f-ort').value.trim()||null }; }
+function gatherForm(){ return { datum:$('#f-datum').value, km:Math.round(pnum($('#f-km').value)), liter:pnum($('#f-liter').value), preis:pnum($('#f-preis').value), total:parseFloat($('#f-total').value), cur:curSel, voll:!!fullSel, ort:$('#f-ort').value.trim()||null }; }
 function validateForm(v){
   const errors=[],warnings=[];
   if(!v.datum) errors.push('Datum fehlt.');
@@ -832,6 +854,8 @@ function askConfirm(text,yes){ return new Promise(res=>{ const ov=$('#confirm-ov
 function ensureHeic(){ return new Promise((res,rej)=>{ if(window.heic2any) return res(); const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('HEIC-Umwandlung nicht verfügbar (offline?).')); document.head.appendChild(sc); }); }
 async function heicToJpeg(file){ await ensureHeic(); const out=await window.heic2any({blob:file,toType:'image/jpeg',quality:0.85}); return Array.isArray(out)?out[0]:out; }
 
+
+const _obAdd=$('#ob-add'); if(_obAdd) _obAdd.onclick=()=>openAdd();
 boot();
 </script>
 <div id="toast" class="toast"></div>

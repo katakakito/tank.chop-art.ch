@@ -199,6 +199,12 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .ob-p{color:var(--muted);font-size:13.5px;line-height:1.6;max-width:300px;margin:0 auto 22px;}
 .ob-card .add-btn{margin-bottom:14px;}
 .ob-hint{color:var(--faint);font-size:11.5px;line-height:1.5;}
+.offline-note{background:var(--amber-soft);border:1px solid rgba(227,168,91,.35);color:var(--amber);border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.45;margin-bottom:14px;font-weight:600;}
+.tv-edit{display:flex;align-items:baseline;gap:6px;}
+.tv-inp{width:120px;text-align:right;background:none;border:none;outline:none;font-family:var(--serif);font-size:23px;color:var(--pink);font-variant-numeric:tabular-nums;padding:0;}
+.tv-inp::placeholder{color:rgba(255,0,170,.45);}
+.tv-cur{font-family:var(--serif);font-size:15px;color:var(--pink);opacity:.85;}
+.ghost.danger{color:var(--red);border-color:rgba(229,80,80,.35);}
 </style>
 </head>
 <body>
@@ -262,6 +268,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
       </div>
     </div>
     <div id="data-view">
+    <div id="offline-note" class="offline-note hidden">Offline – es werden zuletzt gespeicherte Daten angezeigt. Änderungen sind erst wieder online möglich.</div>
     <!-- hero stats -->
     <div class="hero" id="hero"></div>
 
@@ -288,13 +295,13 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
       <button class="tbtn" id="open-settings2">__GEAR__ Einstellungen</button>
     </div>
     </div>
-    <div class="footer">Renault Mégane Grandtour</div>
+    <div class="footer">Renault Mégane Grandtour · <span id="app-ver"></span></div>
   </div>
 </div>
 
 <!-- ============ ADD SHEET ============ -->
 <div id="add-overlay" class="overlay hidden">
-  <div class="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title">
     <div class="sheet-h"><h2 id="add-title">Neue Tankung</h2><button class="x" id="add-close">×</button></div>
     <div id="add-msg"></div>
     <input type="file" id="f-photo" accept="image/*" style="display:none">
@@ -308,8 +315,8 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
       <div class="field"><label class="label" for="f-liter">Tankmenge</label><div class="suffix"><input class="inp" id="f-liter" type="text" inputmode="decimal" placeholder="0.00"><span class="s">L</span></div></div>
       <div class="field"><label class="label" for="f-preis">Literpreis B95</label><div class="suffix"><input class="inp" id="f-preis" type="text" inputmode="decimal" placeholder="0.000"><span class="s" id="s-preis">CHF/L</span></div></div>
     </div>
-    <div class="total-line"><span class="label">Total Füllung</span><span class="tv" id="f-total-view">–</span></div>
-    <input type="hidden" id="f-total">
+    <div class="total-line"><label class="label" for="f-total">Total Füllung</label>
+      <div class="tv-edit"><input class="tv-inp" id="f-total" type="text" inputmode="decimal" placeholder="0.00"><span class="tv-cur" id="s-total">CHF</span></div></div>
     <div class="field"><span class="label">Währung</span>
       <div class="seg" id="seg-cur">
         <button data-cur="CHF" class="on">CHF</button>
@@ -325,13 +332,14 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <div class="field"><label class="label" for="f-ort">Ort / Tankstelle (optional)</label><input class="inp" id="f-ort" placeholder="z. B. Migrol Au SG"></div>
     <button class="save-btn" id="f-save">Speichern</button>
     <button class="ghost" id="add-cancel">Abbrechen</button>
+    <button class="ghost danger" id="f-delete" style="display:none">Tankung löschen</button>
   </div>
 </div>
 
 <!-- ============ SETTINGS SHEET ============ -->
 <div id="set-overlay" class="overlay hidden">
-  <div class="sheet">
-    <div class="sheet-h"><h2>Einstellungen</h2><button class="x" id="set-close">×</button></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-title">
+    <div class="sheet-h"><h2 id="set-title">Einstellungen</h2><button class="x" id="set-close">×</button></div>
     <div class="field"><label class="label" for="set-rate">EUR → CHF Kurs (leer = automatisch)</label>
       <div class="suffix"><input class="inp" id="set-rate" type="text" inputmode="decimal" placeholder="z. B. 0.95"><span class="s">CHF je EUR</span></div>
       <p class="help">Leer lassen = aktueller Kurs wird automatisch geholt (EZB-Referenz via Frankfurter) und täglich aufgefrischt. Ein eigener Wert überschreibt den automatischen.</p>
@@ -374,7 +382,7 @@ const money = (n,c)=> c+' '+nf(n,2);
 function show(id){['screen-config','screen-auth','screen-app'].forEach(s=>$('#'+s).classList.add('hidden'));$('#'+id).classList.remove('hidden');}
 function msg(el,type,txt){el.innerHTML = txt?`<div class="msg ${type}">${txt}</div>`:'';}
 
-let sb=null, ENTRIES=[];
+let sb=null, ENTRIES=[], loadError=false;
 
 // ---------- Boot ----------
 function boot(){
@@ -434,10 +442,12 @@ async function loadData(){
   const _l=$('#list'); if(_l && !_l.children.length) _l.innerHTML='<div class="loading-row"><span class="spin"></span> Lädt …</div>';
   let error=null,data=null;
   try{ const r=await sb.from('tankungen').select('*').order('km_stand',{ascending:true}); error=r.error; data=r.data; }catch(e){ error=e; }
-  ENTRIES = (!error && data) ? data : [];
+  loadError=!!error;
+  if(!error && data){ ENTRIES=data; try{ localStorage.setItem('tanklog_cache', JSON.stringify(data)); }catch(e){} }
+  else { let c=[]; try{ c=JSON.parse(localStorage.getItem('tanklog_cache')||'[]'); }catch(e){} ENTRIES=c; }
   loadQueue().forEach(it=> ENTRIES.push(Object.assign({}, it.obj, {id:it.id, _pending:true})));
   if(!error && ENTRIES.some(e=>e.waehrung==='EUR')){ try{ await ensureRate(); }catch(e){} }
-  if(error) toast('err','Konnte Daten nicht laden (offline?).');
+  if(error) toast('err', ENTRIES.length?'Offline – zeige zuletzt gespeicherte Daten.':'Konnte Daten nicht laden (offline?).');
   computeAndRender();
 }
 
@@ -459,9 +469,10 @@ function withConsumption(asc){
 }
 
 function computeAndRender(){
-  const __empty=!ENTRIES.length; const dv=$('#data-view'), ob=$('#onboarding');
-  if(dv) dv.classList.toggle('hidden',__empty); if(ob) ob.classList.toggle('hidden',!__empty);
-  if(__empty) return;
+  const __empty=!ENTRIES.length; const __showOb=__empty && !loadError; const dv=$('#data-view'), ob=$('#onboarding');
+  if(dv) dv.classList.toggle('hidden',__showOb); if(ob) ob.classList.toggle('hidden',!__showOb);
+  { const on=$('#offline-note'); if(on) on.classList.toggle('hidden',!loadError); }
+  if(__showOb) return;
   const asc = withConsumption(ENTRIES.slice().sort((a,b)=>a.km_stand-b.km_stand));
   const er = effectiveRate(); const rate = er?er.rate:NaN;
   // aggregate verbrauch
@@ -523,7 +534,7 @@ function rowHtml(e){
       </div>
       <div class="r2">
         <span class="date">${d}</span>
-        <button class="del" data-id="${e.id}">löschen</button>
+        ${e._pending?`<button class="del" data-id="${e.id}">verwerfen</button>`:''}
       </div>`;
 }
 function renderList(query){
@@ -596,12 +607,12 @@ function drawChart(svgSel,curSel,vals,fmt,color){
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 // ---------- Add sheet ----------
-let curSel='CHF', fullSel=1, editingId=null, savePending=false;
+let curSel='CHF', fullSel=1, editingId=null, savePending=false, _lastFocus=null;
 function openAdd(){
   editingId=null; savePending=false; $('#add-title').textContent='Neue Tankung'; $('#f-save').textContent='Speichern';
   $('#f-datum').value=new Date().toISOString().slice(0,10);
   $('#f-km').value=''; $('#f-liter').value=''; $('#f-preis').value=''; $('#f-total').value=''; $('#f-ort').value='';
-  $('#f-total-view').textContent='–';
+  $('#s-total').textContent='CHF';
   setSeg('#seg-cur','data-cur','CHF'); curSel='CHF'; $('#s-preis').textContent='CHF/L';
   setSeg('#seg-full','data-full','1'); fullSel=1;
   // prefill km hint with last
@@ -609,16 +620,23 @@ function openAdd(){
   $('#f-km').placeholder = last?('> '+last):'0';
   msg($('#add-msg'),'',null);
   $('#scan-status').className='scan-status';
+  { const _fd=$('#f-delete'); if(_fd) _fd.style.display='none'; }
   $('#add-overlay').classList.remove('hidden');
+  _lastFocus=document.activeElement; setTimeout(()=>{ const k=$('#f-km'); if(k) k.focus(); },60);
 }
 function setSeg(sel,attr,val){ document.querySelectorAll(`${sel} button`).forEach(b=>b.classList.toggle('on', b.getAttribute(attr)===String(val))); }
 function recalcTotal(){
   const l=pnum($('#f-liter').value), p=pnum($('#f-preis').value);
-  if(!isNaN(l)&&!isNaN(p)){ const t=l*p; $('#f-total').value=t.toFixed(2); $('#f-total-view').textContent=nf(t,2)+' '+curSel; }
-  else { $('#f-total').value=''; $('#f-total-view').textContent='–'; }
+  if(!isNaN(l)&&!isNaN(p)){ $('#f-total').value=(l*p).toFixed(2); }
 }
-$('#f-liter').oninput=recalcTotal; $('#f-preis').oninput=recalcTotal;
-$('#seg-cur').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; curSel=b.dataset.cur; setSeg('#seg-cur','data-cur',curSel); $('#s-preis').textContent=curSel+'/L'; recalcTotal(); };
+function recalcFromTotal(){
+  const t=pnum($('#f-total').value), l=pnum($('#f-liter').value), p=pnum($('#f-preis').value);
+  if(isNaN(t)) return;
+  if(!isNaN(l)&&l>0){ $('#f-preis').value=(t/l).toFixed(3); }
+  else if(!isNaN(p)&&p>0){ $('#f-liter').value=(t/p).toFixed(2); }
+}
+$('#f-liter').oninput=recalcTotal; $('#f-preis').oninput=recalcTotal; $('#f-total').oninput=recalcFromTotal;
+$('#seg-cur').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; curSel=b.dataset.cur; setSeg('#seg-cur','data-cur',curSel); $('#s-preis').textContent=curSel+'/L'; $('#s-total').textContent=curSel; recalcTotal(); };
 $('#seg-full').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; fullSel=+b.dataset.full; setSeg('#seg-full','data-full',fullSel); };
 $('#open-add').onclick=openAdd;
 $('#add-close').onclick=$('#add-cancel').onclick=()=>$('#add-overlay').classList.add('hidden');
@@ -650,11 +668,11 @@ $('#f-save').onclick=async()=>{
 };
 
 async function delEntry(id){
-  if(String(id).indexOf('pending')===0){ unqueueAdd(id); ENTRIES=ENTRIES.filter(x=>x.id!==id); computeAndRender(); toast('ok','Offline-Eintrag verworfen.'); return; }
-  if(!await askConfirm('Diese Tankung wirklich löschen?','Löschen')) return;
+  if(String(id).indexOf('pending')===0){ unqueueAdd(id); ENTRIES=ENTRIES.filter(x=>x.id!==id); computeAndRender(); toast('ok','Offline-Eintrag verworfen.'); return true; }
+  if(!await askConfirm('Diese Tankung wirklich löschen?','Löschen')) return false;
   const {error}=await sb.from('tankungen').delete().eq('id',id);
-  if(error){ toast('err',error.message); return; }
-  await loadData(); toast('ok','Tankung gelöscht.');
+  if(error){ toast('err',error.message); return false; }
+  await loadData(); toast('ok','Tankung gelöscht.'); return true;
 }
 
 // ---------- Settings ----------
@@ -662,14 +680,15 @@ function openSet(){
   $('#set-rate').value = localStorage.getItem(RATE_KEY)||'';
   { const er=effectiveRate(); $('#set-rate').placeholder = (er&&er.src==='auto')?('automatisch: '+nf(er.rate,3)+(er.date?(' · '+er.date.split('-').reverse().join('.')):'')):'automatisch (leer lassen)'; }
   $('#set-overlay').classList.remove('hidden');
+  _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#set-close'); if(c) c.focus(); },60);
   try{ QRCode.toCanvas($('#qr'), location.href, {width:180,margin:1,color:{dark:'#0b1012',light:'#ffffff'}}); }catch(e){}
 }
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
 $('#set-close').onclick=()=>$('#set-overlay').classList.add('hidden');
 $('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); $('#set-overlay').classList.add('hidden'); try{ await ensureRate(); }catch(e){} computeAndRender(); };
-$('#set-logout').onclick=async()=>{ await sb.auth.signOut(); $('#set-overlay').classList.add('hidden'); show('screen-auth'); };
+$('#set-logout').onclick=async()=>{ if(!await askConfirm('Wirklich abmelden?','Abmelden')) return; await sb.auth.signOut(); $('#set-overlay').classList.add('hidden'); show('screen-auth'); };
 $('#set-reset').onclick=resetCfg;
-function resetCfg(){ if(confirm('Supabase-Verbindung auf diesem Gerät entfernen?')){ localStorage.removeItem(CFG_KEY); location.reload(); } }
+async function resetCfg(){ if(await askConfirm('Supabase-Verbindung auf diesem Gerät entfernen?','Entfernen')){ localStorage.removeItem(CFG_KEY); location.reload(); } }
 
 // ---------- CSV ----------
 $('#export-csv').onclick=()=>{
@@ -725,7 +744,7 @@ function fillFromScan(o){
   if(l!=null) $('#f-liter').value=l;
   if(p!=null) $('#f-preis').value=p;
   recalcTotal();
-  if(t!=null && (l==null||p==null)){ $('#f-total').value=t.toFixed(2); $('#f-total-view').textContent=nf(t,2)+' '+curSel; }
+  if(t!=null && (l==null||p==null)){ $('#f-total').value=t.toFixed(2); } $('#s-total').textContent=curSel;
   $('#f-km').focus();
 }
 
@@ -752,7 +771,7 @@ async function ensureRate(){
 
 
 // ---------- Bearbeiten / Validierung / Import / Offline ----------
-function gatherForm(){ return { datum:$('#f-datum').value, km:Math.round(pnum($('#f-km').value)), liter:pnum($('#f-liter').value), preis:pnum($('#f-preis').value), total:parseFloat($('#f-total').value), cur:curSel, voll:!!fullSel, ort:$('#f-ort').value.trim()||null }; }
+function gatherForm(){ return { datum:$('#f-datum').value, km:Math.round(pnum($('#f-km').value)), liter:pnum($('#f-liter').value), preis:pnum($('#f-preis').value), total:pnum($('#f-total').value), cur:curSel, voll:!!fullSel, ort:$('#f-ort').value.trim()||null }; }
 function validateForm(v){
   const errors=[],warnings=[];
   if(!v.datum) errors.push('Datum fehlt.');
@@ -779,9 +798,11 @@ function openEdit(e){
   curSel=(e.waehrung==='EUR')?'EUR':'CHF'; setSeg('#seg-cur','data-cur',curSel); $('#s-preis').textContent=curSel+'/L';
   fullSel=e.vollgetankt?1:0; setSeg('#seg-full','data-full',fullSel);
   $('#f-ort').value=e.ort||'';
-  $('#f-total').value=Number(e.total).toFixed(2); $('#f-total-view').textContent=nf(Number(e.total),2)+' '+curSel;
+  $('#f-total').value=Number(e.total).toFixed(2); $('#s-total').textContent=curSel;
   msg($('#add-msg'),'',null); $('#scan-status').className='scan-status';
+  { const _fd=$('#f-delete'); if(_fd) _fd.style.display=''; }
   $('#add-overlay').classList.remove('hidden');
+  _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#add-close'); if(c) c.focus(); },60);
 }
 
 // Offline-Warteschlange
@@ -849,17 +870,27 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
 // ---------- Meldungen / Bestätigung / Suche / HEIC ----------
 let _ascCache=[], _toastT=null;
 function toast(type,txt){ const el=$('#toast'); if(!el) return; el.className='toast '+type; el.textContent=txt; el.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove('show'),3200); }
-function askConfirm(text,yes){ return new Promise(res=>{ const ov=$('#confirm-overlay'); $('#confirm-msg').textContent=text; $('#confirm-yes').textContent=yes||'OK'; ov.classList.remove('hidden'); const done=v=>{ ov.classList.add('hidden'); res(v); }; $('#confirm-yes').onclick=()=>done(true); $('#confirm-no').onclick=()=>done(false); }); }
+function askConfirm(text,yes){ return new Promise(res=>{ const ov=$('#confirm-overlay'); $('#confirm-msg').textContent=text; $('#confirm-yes').textContent=yes||'OK'; ov.classList.remove('hidden'); setTimeout(()=>{ const n=$('#confirm-no'); if(n) n.focus(); },50); const done=v=>{ ov.classList.add('hidden'); res(v); }; $('#confirm-yes').onclick=()=>done(true); $('#confirm-no').onclick=()=>done(false); }); }
 (function(){ const ls=$('#list-search'); if(ls) ls.oninput=()=>renderList(ls.value); })();
 function ensureHeic(){ return new Promise((res,rej)=>{ if(window.heic2any) return res(); const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('HEIC-Umwandlung nicht verfügbar (offline?).')); document.head.appendChild(sc); }); }
 async function heicToJpeg(file){ await ensureHeic(); const out=await window.heic2any({blob:file,toType:'image/jpeg',quality:0.85}); return Array.isArray(out)?out[0]:out; }
 
 
 const _obAdd=$('#ob-add'); if(_obAdd) _obAdd.onclick=()=>openAdd();
+// Löschen im Bearbeiten-Dialog
+{ const _fdel=$('#f-delete'); if(_fdel) _fdel.onclick=async()=>{ if(!editingId) return; if(await delEntry(editingId)) $('#add-overlay').classList.add('hidden'); }; }
+// Backdrop schliesst Einstellungen; ESC schliesst Sheets
+$('#set-overlay').addEventListener('click',e=>{ if(e.target===$('#set-overlay')) $('#set-overlay').classList.add('hidden'); });
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return;
+  if(!$('#confirm-overlay').classList.contains('hidden')){ $('#confirm-no').click(); return; }
+  if(!$('#add-overlay').classList.contains('hidden')){ $('#add-overlay').classList.add('hidden'); return; }
+  if(!$('#set-overlay').classList.contains('hidden')){ $('#set-overlay').classList.add('hidden'); return; }
+});
+const APP_VER='v1.1 · 2026-06-01'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 boot();
 </script>
 <div id="toast" class="toast"></div>
-<div id="confirm-overlay" class="overlay hidden"><div class="sheet">
+<div id="confirm-overlay" class="overlay hidden"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirm-msg">
   <div class="confirm-msg" id="confirm-msg"></div>
   <button class="save-btn danger" id="confirm-yes">OK</button>
   <button class="ghost" id="confirm-no">Abbrechen</button>

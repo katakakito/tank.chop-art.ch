@@ -222,6 +222,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .scan-status.work,.scan-status.ok{background:var(--teal-soft);border:1px solid rgba(45,212,191,.35);color:var(--teal);}
 .scan-status.err{background:rgba(240,120,111,.12);border:1px solid rgba(240,120,111,.4);color:var(--red);}
 .spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;flex:0 0 auto;}
+.icon-btn.spinning svg{animation:sp .8s linear infinite;transform-origin:50% 50%;}
 @keyframes sp{to{transform:rotate(360deg);}}
 
 .statcard{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:4px 16px;margin-bottom:6px;}
@@ -277,6 +278,33 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .swatches{display:flex;gap:10px;flex-wrap:wrap;padding:2px 0;}
 .swatches button{width:30px;height:30px;border-radius:50%;background:var(--sw);border:2px solid var(--line2);transition:.15s;}
 .swatches button.on{box-shadow:0 0 0 2px var(--bg2),0 0 0 4px var(--ink);}
+/* D2 Install-Hinweis */
+.install-note{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--teal-soft);border:1px solid var(--line2);color:var(--ink);font-size:13px;line-height:1.4;padding:10px 12px;border-radius:14px;margin:0 0 12px;}
+.install-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+.install-go{background:linear-gradient(100deg,var(--teal),var(--teal-d));color:#05201c;border:none;border-radius:10px;padding:7px 12px;font-weight:700;font-size:12.5px;cursor:pointer;}
+.install-x{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px 6px;line-height:1;}
+/* B3 Nur-km-Modus */
+#add-overlay.kmmode .fuelonly{display:none!important;}
+.chip.kmonly{font-style:italic;color:var(--muted);}
+.tot-km{color:var(--faint);font-size:12px;font-weight:600;}
+/* G2 Chart-Tooltip */
+.charttip{position:absolute;top:0;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--line2);color:var(--ink);font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:6;box-shadow:0 4px 14px rgba(0,0,0,.18);}
+/* B4 Service-Historie */
+.svc-add-btn{margin-top:8px;}
+.svc-row{cursor:pointer;}
+.svc-row:active{opacity:.7;}
+/* A4 Tank-Kalender / Heatmap */
+#heatmap svg{width:100%;height:auto;display:block;}
+#heatmap rect[data-date]{cursor:pointer;}
+.heat-legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:8px;font-size:11px;color:var(--muted);}
+.heat-legend i{width:10px;height:10px;border-radius:2px;background:var(--teal);display:inline-block;}
+/* G5 Skeleton-Loader */
+.skel{display:none;}
+#data-view.loading > #skeleton{display:block;}
+#data-view.loading > *:not(#skeleton){display:none;}
+.skel-row{display:flex;gap:10px;}
+.skel-b{background:linear-gradient(90deg,var(--line2) 25%,var(--line) 37%,var(--line2) 63%);background-size:400% 100%;animation:skl 1.3s ease infinite;border-radius:12px;}
+@keyframes skl{0%{background-position:100% 0}100%{background-position:-100% 0}}
 /* sichtbare Fokus-Ringe für Tastaturbedienung */
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
 button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visible,.icon-btn:focus-visible,.add-btn:focus-visible,.save-btn:focus-visible,.ghost:focus-visible,.scan-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:10px;}
@@ -330,6 +358,7 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
   <div class="top"><div class="wrap">
     <div class="logo">__PUMP__</div>
     <div class="ttl"><h1>Tank-Log</h1><div class="sub" id="veh-sub"></div></div>
+    <button class="icon-btn" id="refresh-btn" title="Aktualisieren" aria-label="Daten aktualisieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
     <button class="icon-btn" id="open-settings" title="Einstellungen" aria-label="Einstellungen">__GEAR__</button>
   </div></div>
 
@@ -344,8 +373,22 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
       </div>
     </div>
     <div id="data-view">
+    <div id="skeleton" class="skel">
+      <div class="skel-row"><div class="skel-b" style="height:96px;flex:1"></div><div class="skel-b" style="height:96px;flex:1"></div></div>
+      <div class="skel-b" style="height:46px;margin:12px 0"></div>
+      <div class="skel-row"><div class="skel-b" style="height:92px;flex:1"></div><div class="skel-b" style="height:92px;flex:1"></div></div>
+      <div class="skel-b" style="height:120px;margin-top:14px"></div>
+      <div class="skel-b" style="height:150px;margin-top:14px"></div>
+    </div>
     <div id="offline-note" class="offline-note hidden">Offline – es werden zuletzt gespeicherte Daten angezeigt. Neue Einträge sowie Änderungen und Löschungen werden lokal gemerkt und automatisch synchronisiert, sobald du wieder online bist.</div>
     <div id="service-note" class="service-note hidden"></div>
+    <div id="install-note" class="install-note hidden">
+      <span id="install-text">App zum Startbildschirm hinzufügen – schneller Zugriff und volle Offline-Nutzung.</span>
+      <span class="install-actions">
+        <button class="install-go" id="install-go">Installieren</button>
+        <button class="install-x" id="install-x" aria-label="Hinweis schliessen">✕</button>
+      </span>
+    </div>
     <!-- hero stats -->
     <div class="period"><div class="seg" id="seg-period">
       <button data-period="30">30 Tage</button>
@@ -365,7 +408,7 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <!-- charts -->
     <div class="sec-h"><h2>Verlauf</h2><span class="ln"></span></div>
     <div class="charts">
-      <div class="chart"><div class="label">Verbrauch L/100&nbsp;km</div><svg id="chart-v" viewBox="0 0 100 40" preserveAspectRatio="none"></svg><div class="cur" id="cur-v">–</div></div>
+      <div class="chart"><div class="label" id="chl-v">Verbrauch L/100&nbsp;km</div><svg id="chart-v" viewBox="0 0 100 40" preserveAspectRatio="none"></svg><div class="cur" id="cur-v">–</div></div>
       <div class="chart"><div class="label">Literpreis</div><svg id="chart-p" viewBox="0 0 100 40" preserveAspectRatio="none"></svg><div class="cur" id="cur-p">–</div></div>
     </div>
 
@@ -376,6 +419,23 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <!-- fahrleistung je monat -->
     <div class="sec-h"><h2>Fahrleistung je Monat</h2><span class="ln"></span></div>
     <div class="barcard" id="kmbars"></div>
+
+    <!-- tank-kalender / heatmap (A4) -->
+    <div class="sec-h"><h2>Tank-Kalender</h2><span class="ln"></span></div>
+    <div class="barcard" id="heatcard">
+      <div id="heatmap"></div>
+      <div class="barcap" id="heat-cap">Tankaktivität – tippe einen Tag an</div>
+      <div class="heat-legend"><span>weniger</span><i style="opacity:.14"></i><i style="opacity:.35"></i><i style="opacity:.55"></i><i style="opacity:.78"></i><i style="opacity:1"></i><span>mehr</span></div>
+    </div>
+
+    <!-- co2 kumulativ -->
+    <div class="sec-h"><h2>CO₂ kumulativ</h2><span class="ln"></span></div>
+    <div class="chart" id="co2card">
+      <div class="chl">Total CO₂ (geschätzt)</div>
+      <svg id="chart-co2" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+      <div class="cur" id="cur-co2">–</div>
+      <div class="barcap" id="co2-yoy"></div>
+    </div>
 
     <!-- statistik -->
     <div class="sec-h"><h2>Statistik</h2><span class="ln"></span></div>
@@ -398,12 +458,17 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <div class="statcard" id="stations"></div>
 
     <!-- list -->
+    <div class="sec-h"><h2>Service-Historie</h2><span class="ln"></span></div>
+    <div id="svc-list"></div>
+    <button class="tbtn svc-add-btn" id="svc-add">+ Service erfassen</button>
+
     <div class="sec-h"><h2>Tankungen</h2><span class="ln"></span><span class="count" id="list-count"></span></div>
     <input class="search" id="list-search" placeholder="Suchen (Ort, Datum, Währung …)">
     <div class="list" id="list"></div>
 
     <div class="toolbar">
       <button class="tbtn" id="export-csv">__DL__ CSV-Export</button>
+      <button class="tbtn" id="export-xls">__DL__ Excel-Export</button>
       <button class="tbtn" id="open-settings2">__GEAR__ Einstellungen</button>
     </div>
     </div>
@@ -416,28 +481,34 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title">
     <div class="sheet-h"><h2 id="add-title">Neue Tankung</h2><button class="x" id="add-close" aria-label="Schliessen">×</button></div>
     <div id="add-msg"></div>
+    <div class="field"><span class="label">Eintrag</span>
+      <div class="seg" id="seg-type">
+        <button data-type="fill" class="on">Tankung</button>
+        <button data-type="km">Nur km-Stand</button>
+      </div>
+    </div>
     <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none">
     <input type="file" id="f-photo" accept="image/*" style="display:none">
-    <button class="scan-btn" id="scan-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h1.5l1.2-1.8A1 1 0 0 1 8.5 4.7h7a1 1 0 0 1 .8.5L17.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.3"/></svg> Foto aufnehmen <span class="hint">Kamera · Beleg / Zapfsäule</span></button>
-    <button class="scan-btn" id="file-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L6 20"/></svg> Aus Datei wählen <span class="hint">Galerie oder Datei</span></button>
-    <div class="scan-status" id="scan-status"></div>
+    <button class="scan-btn fuelonly" id="scan-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h1.5l1.2-1.8A1 1 0 0 1 8.5 4.7h7a1 1 0 0 1 .8.5L17.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.3"/></svg> Foto aufnehmen <span class="hint">Kamera · Beleg / Zapfsäule</span></button>
+    <button class="scan-btn fuelonly" id="file-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L6 20"/></svg> Aus Datei wählen <span class="hint">Galerie oder Datei</span></button>
+    <div class="scan-status fuelonly" id="scan-status"></div>
     <div class="two">
       <div class="field"><label class="label" for="f-datum">Datum</label><input class="inp" id="f-datum" type="date"></div>
       <div class="field"><label class="label" for="f-km">KM-Stand</label><div class="suffix"><input class="inp" id="f-km" type="text" inputmode="numeric" placeholder="0"><span class="s">km</span></div></div>
     </div>
-    <div class="two">
+    <div class="two fuelonly">
       <div class="field"><label class="label" for="f-liter">Tankmenge</label><div class="suffix"><input class="inp" id="f-liter" type="text" inputmode="decimal" placeholder="0.00"><span class="s">L</span></div></div>
       <div class="field"><label class="label" for="f-preis">Literpreis <span id="lbl-fuel"></span></label><div class="suffix"><input class="inp" id="f-preis" type="text" inputmode="decimal" placeholder="0.000"><span class="s" id="s-preis">CHF/L</span></div></div>
     </div>
-    <div class="total-line"><label class="label" for="f-total">Total Füllung</label>
+    <div class="total-line fuelonly"><label class="label" for="f-total">Total Füllung</label>
       <div class="tv-edit"><input class="tv-inp" id="f-total" type="text" inputmode="decimal" placeholder="0.00"><span class="tv-cur" id="s-total">CHF</span></div></div>
-    <div class="field"><span class="label">Währung</span>
+    <div class="field fuelonly"><span class="label">Währung</span>
       <div class="seg" id="seg-cur">
         <button data-cur="CHF" class="on">CHF</button>
         <button data-cur="EUR">EUR</button>
       </div>
     </div>
-    <div class="field"><span class="label">Vollgetankt?</span>
+    <div class="field fuelonly"><span class="label">Vollgetankt?</span>
       <div class="seg" id="seg-full">
         <button data-full="1" class="on">Ja — Tank voll</button>
         <button data-full="0">Teil­tankung</button>
@@ -448,6 +519,31 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <button class="save-btn" id="f-save">Speichern</button>
     <button class="ghost" id="add-cancel">Abbrechen</button>
     <button class="ghost danger" id="f-delete" style="display:none">Tankung löschen</button>
+  </div>
+</div>
+
+<!-- ============ SERVICE SHEET (B4) ============ -->
+<div id="svc-overlay" class="overlay hidden">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="svc-title">
+    <div class="sheet-h"><h2 id="svc-title">Service erfassen</h2><button class="x" id="svc-close" aria-label="Schliessen">×</button></div>
+    <div id="svc-msg"></div>
+    <div class="two">
+      <div class="field"><label class="label" for="svc-datum">Datum</label><input class="inp" id="svc-datum" type="date"></div>
+      <div class="field"><label class="label" for="svc-km">KM-Stand</label><div class="suffix"><input class="inp" id="svc-km" type="text" inputmode="numeric" placeholder="0"><span class="s">km</span></div></div>
+    </div>
+    <div class="field"><label class="label" for="svc-art">Art</label>
+      <select class="inp" id="svc-art">
+        <option>Service</option><option>Ölwechsel</option><option>Reifen</option><option>Bremsen</option><option>MFK / Prüfung</option><option>Reparatur</option><option>Sonstiges</option>
+      </select>
+    </div>
+    <div class="two">
+      <div class="field"><label class="label" for="svc-kosten">Kosten (optional)</label><div class="suffix"><input class="inp" id="svc-kosten" type="text" inputmode="decimal" placeholder="0.00"><span class="s" id="svc-cur">CHF</span></div></div>
+      <div class="field"><span class="label">Währung</span><div class="seg" id="svc-seg-cur"><button data-cur="CHF" class="on">CHF</button><button data-cur="EUR">EUR</button></div></div>
+    </div>
+    <div class="field"><label class="label" for="svc-notiz">Notiz (optional)</label><input class="inp" id="svc-notiz" placeholder="z. B. Werkstatt, Teile …"></div>
+    <button class="save-btn" id="svc-save">Speichern</button>
+    <button class="ghost" id="svc-cancel">Abbrechen</button>
+    <button class="ghost danger" id="svc-delete" style="display:none">Service löschen</button>
   </div>
 </div>
 
@@ -470,6 +566,13 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
         <button data-accent="#22c55e" title="Grün" style="--sw:#22c55e" aria-label="Grün"></button>
         <button data-accent="#f59e0b" title="Orange" style="--sw:#f59e0b" aria-label="Orange"></button>
         <button data-accent="#ec4899" title="Pink" style="--sw:#ec4899" aria-label="Pink"></button>
+      </div>
+    </div>
+    <div class="field"><span class="label">Verbrauchseinheit</span>
+      <div class="seg" id="seg-unit">
+        <button data-unit="l100" class="on">L/100km</button>
+        <button data-unit="kml">km/L</button>
+        <button data-unit="mpg">mpg</button>
       </div>
     </div>
     <hr class="sep">
@@ -618,6 +721,7 @@ async function startApp(){
   await loadData();
   maybeHandleSharedPhoto();
   maybeHandleAction();
+  warmHeicCache();
 }
 // App-Shortcut „Neue Tankung" (Manifest) öffnet direkt das Erfassungs-Sheet
 function maybeHandleAction(){
@@ -639,7 +743,9 @@ async function maybeHandleSharedPhoto(){
     await processPhotoFile(blob);
   }catch(_){}
 }
+let _loadedOnce=false;
 async function loadData(){
+  if(!_loadedOnce){ const dv=$('#data-view'); if(dv) dv.classList.add('loading'); }
   const _l=$('#list'); if(_l && !_l.children.length) _l.innerHTML='<div class="loading-row"><span class="spin"></span> Lädt …</div>';
   let error=null,data=null;
   try{ const r=await sb.from('tankungen').select('*').order('km_stand',{ascending:true}); error=r.error; data=r.data; }catch(e){ error=e; }
@@ -682,6 +788,7 @@ function inPeriod(e,cut){
   if(!cut) return true; if(!e.datum) return false; const d=new Date(e.datum+'T00:00:00'); return d>=cut;
 }
 function computeAndRender(){
+  _loadedOnce=true; { const _dv=$('#data-view'); if(_dv) _dv.classList.remove('loading'); }
   const __empty=!ENTRIES.length; const __showOb=__empty && !loadError; const dv=$('#data-view'), ob=$('#onboarding');
   if(dv) dv.classList.toggle('hidden',__showOb); if(ob) ob.classList.toggle('hidden',!__showOb);
   { const on=$('#offline-note'); if(on) on.classList.toggle('hidden',!loadError); }
@@ -708,8 +815,8 @@ function computeAndRender(){
 
   const hero=$('#hero'); hero.innerHTML='';
   // 1) Ø Verbrauch
-  const vHint = lastV ? ('zuletzt '+nf(lastV._v,1)+' L/100 km') : (pe.length ? 'keine Volltank-Strecke im Zeitraum' : 'keine Tankung in diesem Zeitraum');
-  hero.appendChild(stat('big','Ø Verbrauch', avgV!=null?nf(avgV,1):'–','L/100 km', vHint, {spark: segs.length>1?segs.map(e=>e._v):null, accent:accent()}));
+  const vHint = lastV ? ('zuletzt '+fmtCons(lastV._v,true)) : (pe.length ? 'keine Volltank-Strecke im Zeitraum' : 'keine Tankung in diesem Zeitraum');
+  hero.appendChild(stat('big','Ø Verbrauch', avgV!=null?nf(convCons(avgV),1):'–',consUnit(), vHint, {spark: segs.length>1?segs.map(e=>e._v):null, accent:accent()}));
   // 2) Kosten / 100 km
   let cphTxt='–', cphUnit='CHF', cphHint=null;
   if(strecke>0){
@@ -726,12 +833,17 @@ function computeAndRender(){
   }
   hero.appendChild(stat('','Ausgaben', costTxt, costUnit, costHint, {accent:'#ff00aa', valColor:'#ff00aa'}));
   // 4) Strecke (Zeitraum)
-  hero.appendChild(stat('','Strecke', strecke?nf(strecke,0):'–','km', pe.length+' Tankung'+(pe.length===1?'':'en'), {accent:accent()}));
+  { const peFills=pe.filter(e=>Number(e.liter)>0).length;
+    hero.appendChild(stat('','Strecke', strecke?nf(strecke,0):'–','km', peFills+' Tankung'+(peFills===1?'':'en'), {accent:accent()})); }
   if(_countUpPending){ _countUpPending=false; runCountUp(hero); }
 
   // charts (volle Historie)
-  drawChart('#chart-v','#cur-v', asc.filter(e=>e._v!=null).map(e=>e._v), v=>nf(v,1)+' L/100km', accent(), 3, wltpVal());
-  drawChart('#chart-p','#cur-p', asc.map(e=>Number(e.literpreis)), v=>nf(v,3), '#ff00aa');
+  { const segE=asc.filter(e=>e._v!=null);
+    const wRef=wltpVal()!=null?convCons(wltpVal()):null;
+    const lbl=$('#chl-v'); if(lbl) lbl.innerHTML='Verbrauch '+consUnit().replace('L/100km','L/100&nbsp;km');
+    drawChart('#chart-v','#cur-v', segE.map(e=>convCons(e._v)), v=>nf(v,1)+' '+consUnit(), accent(), 3, wRef, segE.map(e=>_fmtDate(e.datum))); }
+  { const fillsE=asc.filter(e=>Number(e.liter)>0);
+    drawChart('#chart-p','#cur-p', fillsE.map(e=>Number(e.literpreis)), v=>nf(v,3), '#ff00aa', 0, null, fillsE.map(e=>_fmtDate(e.datum))); }
 
   renderMoreStats(asc);
   renderInsights(asc, rate);
@@ -739,6 +851,9 @@ function computeAndRender(){
   renderForecast(asc, rate);
   renderCostBars(asc, rate);
   renderKmBars(asc);
+  renderCo2(asc);
+  renderHeatmap(asc);
+  renderServiceLog();
   renderStations(asc, rate);
   refreshOrtList();
   renderService(asc);
@@ -749,18 +864,21 @@ function computeAndRender(){
 }
 function rowHtml(e){
   const d=new Date(e.datum+'T00:00:00').toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
-  const cur=e.waehrung;
+  const cur=e.waehrung; const km=isKmOnly(e);
+  const fuelChips = km ? '<span class="chip kmonly">nur km-Stand</span>'
+    : `<span class="chip">${nf(e.liter,2)} L</span>
+          <span class="chip ${cur==='EUR'?'eur':''}">${nf(e.literpreis,3)} ${cur}/L</span>
+          ${e._v!=null?`<span class="chip v">${fmtCons(e._v,true)}</span>`:''}
+          ${e.vollgetankt?'':'<span class="chip">Teiltankung</span>'}`;
+  const totHtml = km ? '<span class="tot-km">km-Eintrag</span>' : `<div class="tot">${nf(e.total,2)} <span class="cur-tag">${cur}</span></div>`;
   return `
       <div class="r1">
         <div><span class="km">${nf(e.km_stand,0)}<span class="u">km</span></span></div>
-        <div><div class="tot">${nf(e.total,2)} <span class="cur-tag">${cur}</span></div></div>
+        <div>${totHtml}</div>
       </div>
       <div class="r2">
         <div class="chips">
-          <span class="chip">${nf(e.liter,2)} L</span>
-          <span class="chip ${cur==='EUR'?'eur':''}">${nf(e.literpreis,3)} ${cur}/L</span>
-          ${e._v!=null?`<span class="chip v">${nf(e._v,1)} L/100km</span>`:''}
-          ${e.vollgetankt?'':'<span class="chip">Teiltankung</span>'}
+          ${fuelChips}
           ${e.ort?`<span class="chip">${escapeHtml(e.ort)}</span>`:''}
           ${e.notiz?`<span class="chip note" title="Notiz">${escapeHtml(e.notiz)}</span>`:''}
           ${e._pending?`<span class="chip" style="color:var(--amber);border-color:rgba(227,168,91,.4);background:var(--amber-soft)">${e._pendingOp==='update'?'Änderung wartet':'wird synchronisiert'}</span>`:''}
@@ -791,19 +909,20 @@ function renderList(query){
 function renderMoreStats(asc){
   const box=$('#morestats'); if(!box) return;
   if(!asc.length){ box.innerHTML=emptyRow('Noch keine Daten'); return; }
+  const fills=asc.filter(e=>Number(e.liter)>0);
   const vs=asc.filter(e=>e._v!=null).map(e=>e._v);
   const segKms=asc.filter(e=>e._segKm!=null).map(e=>e._segKm);
   const totL=asc.reduce((sm,e)=>sm+Number(e.liter),0);
-  let lastTxt='–'; const lastDatum=asc.map(e=>e.datum).filter(Boolean).sort().slice(-1)[0];
+  let lastTxt='–'; const lastDatum=fills.map(e=>e.datum).filter(Boolean).sort().slice(-1)[0];
   if(lastDatum){ const a=new Date(lastDatum+'T00:00:00'); a.setHours(0,0,0,0); const t=new Date(); t.setHours(0,0,0,0); const days=Math.round((t-a)/86400000); lastTxt = days<=0?'heute':(days===1?'gestern':('vor '+days+' Tagen')); }
   const avgRange = segKms.length ? segKms.reduce((s,v)=>s+v,0)/segKms.length : null;
   const rows=[
     ['Letzte Tankung', lastTxt,''],
     ['Ø km / Tankfüllung', avgRange!=null?nf(avgRange,0)+' km':'–','tealv'],
-    ['Bester Verbrauch', vs.length?nf(Math.min(...vs),1)+' L/100km':'–','tealv'],
-    ['Höchster Verbrauch', vs.length?nf(Math.max(...vs),1)+' L/100km':'–','tealv'],
+    ['Bester Verbrauch', vs.length?fmtCons(Math.min(...vs),true):'–','tealv'],
+    ['Höchster Verbrauch', vs.length?fmtCons(Math.max(...vs),true):'–','tealv'],
     ['Total getankt', nf(totL,1)+' L',''],
-    ['Tankungen', String(asc.length),'']
+    ['Tankungen', String(fills.length),'']
   ];
   box.innerHTML=rows.map(r=>`<div class="srow"><span class="sk">${r[0]}</span><span class="sv ${r[2]}">${r[1]}</span></div>`).join('');
 }
@@ -829,14 +948,15 @@ function renderInsights(asc, rate){
   let overall=null; { let L=0,K=0; seg.forEach(e=>{ L+=e._v*e._segKm/100; K+=e._segKm; }); overall=K>0?L/K*100:null; }
   const rows=[
     ['Ø Ausgaben / Monat', avgMon!=null?('≈ '+nf(avgMon,2)+' CHF'):'–','pinkv'],
-    ['Verbrauch Sommer (Apr–Sep)', sommer!=null?nf(sommer,1)+' L/100km':'–','tealv'],
-    ['Verbrauch Winter (Okt–Mär)', winter!=null?nf(winter,1)+' L/100km':'–','tealv'],
+    ['Verbrauch Sommer (Apr–Sep)', sommer!=null?fmtCons(sommer,true):'–','tealv'],
+    ['Verbrauch Winter (Okt–Mär)', winter!=null?fmtCons(winter,true):'–','tealv'],
     ['CO₂ (geschätzt)', gkm!=null?('≈ '+nf(gkm,0)+' g/km'):'–',''],
     ['CO₂ total (geschätzt)', '≈ '+nf(co2kg,0)+' kg','']
   ];
   const wl=wltpVal();
   if(wl){
-    const cmp = overall!=null ? (nf(overall,1)+' vs '+nf(wl,1)+' L/100km · '+(overall>=wl?'+':'')+nf((overall-wl)/wl*100,0)+'%') : ('Werksangabe '+nf(wl,1)+' L/100km');
+    const co=convCons(overall), cw=convCons(wl);
+    const cmp = (co!=null) ? (nf(co,1)+' vs '+nf(cw,1)+' '+consUnit()+' · '+((co-cw)>=0?'+':'')+nf(cw>0?(co-cw)/cw*100:0,0)+'%') : ('Werksangabe '+nf(cw,1)+' '+consUnit());
     rows.push(['Ist vs. WLTP', cmp, (overall!=null && overall>wl) ? 'pinkv':'tealv']);
   }
   box.innerHTML=rows.map(r=>`<div class="srow"><span class="sk">${r[0]}</span><span class="sv ${r[2]}">${r[1]}</span></div>`).join('');
@@ -846,7 +966,7 @@ function renderInsights(asc, rate){
 function renderStations(asc, rate){
   const box=$('#stations'); if(!box) return;
   const map={};
-  asc.forEach(e=>{ const o=(e.ort||'').trim(); if(!o) return; const m=map[o]=map[o]||{n:0,liter:0,wsum:0,cur:{}}; m.n++; m.liter+=Number(e.liter); m.wsum+=Number(e.liter)*Number(e.literpreis); m.cur[e.waehrung]=(m.cur[e.waehrung]||0)+Number(e.liter); });
+  asc.forEach(e=>{ if(Number(e.liter)<=0) return; const o=(e.ort||'').trim(); if(!o) return; const m=map[o]=map[o]||{n:0,liter:0,wsum:0,cur:{}}; m.n++; m.liter+=Number(e.liter); m.wsum+=Number(e.liter)*Number(e.literpreis); m.cur[e.waehrung]=(m.cur[e.waehrung]||0)+Number(e.liter); });
   const list=Object.keys(map).map(o=>{ const m=map[o]; const cur=Object.keys(m.cur).sort((a,b)=>m.cur[b]-m.cur[a])[0]||'CHF'; const avg=m.liter>0?m.wsum/m.liter:0; const avgCHF=cur==='CHF'?avg:(!isNaN(rate)?avg*rate:avg); return {o,n:m.n,avg,cur,avgCHF}; });
   if(!list.length){ box.innerHTML=emptyRow('Noch keine Orte erfasst')+'<p class="help" style="margin:8px 2px 0">Tippe beim Erfassen eine Tankstelle ein – dann erscheint hier ein Preisvergleich.</p>'; return; }
   list.sort((a,b)=>a.avgCHF-b.avgCHF);
@@ -889,10 +1009,10 @@ function stat(cls,label,val,unit,hint,opts){
   return d;
 }
 
-function drawChart(svgSel,curSel,vals,fmt,color,maWindow,refLine){
+function drawChart(svgSel,curSel,vals,fmt,color,maWindow,refLine,labels){
   const svg=$(svgSel); const cur=$(curSel);
-  if(!vals.length){ svg.innerHTML=''; cur.textContent='–'; return; }
-  if(vals.length===1){ cur.textContent=fmt(vals[0]); svg.innerHTML=''; return; }
+  if(!vals.length){ svg.innerHTML=''; cur.textContent='–'; hideTip(svg); return; }
+  if(vals.length===1){ cur.textContent=fmt(vals[0]); svg.innerHTML=''; hideTip(svg); return; }
   const w=100,h=40; let mn=Math.min(...vals),mx=Math.max(...vals);
   if(refLine!=null && isFinite(refLine)){ mn=Math.min(mn,refLine); mx=Math.max(mx,refLine); }
   const rg=(mx-mn)||1;
@@ -915,8 +1035,32 @@ function drawChart(svgSel,curSel,vals,fmt,color,maWindow,refLine){
     ${ref}
     ${ma}
     <polyline points="${line}" fill="none" stroke="${color}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
-    <circle cx="${lastX.toFixed(2)}" cy="${lastY.toFixed(2)}" r="2.6" fill="${color}" vector-effect="non-scaling-stroke"/>`;
+    <circle cx="${lastX.toFixed(2)}" cy="${lastY.toFixed(2)}" r="2.6" fill="${color}" vector-effect="non-scaling-stroke"/>
+    <g class="mk" style="opacity:0"><line class="mk-l" x1="0" y1="0" x2="0" y2="${h}" stroke-width="1" vector-effect="non-scaling-stroke" style="stroke:var(--faint)"/><circle class="mk-d" r="2.8" fill="${color}" stroke="var(--bg2)" stroke-width="1" vector-effect="non-scaling-stroke"/></g>
+    <rect class="hit" x="0" y="0" width="${w}" height="${h}" fill="transparent" style="pointer-events:all"/>`;
   cur.textContent=fmt(vals[vals.length-1]);
+  if(labels && labels.length===vals.length){ attachChartTip(svg, vals, labels, fmt, X, Y); }
+  else { svg.onpointermove=svg.onpointerdown=svg.onpointerleave=null; hideTip(svg); }
+}
+function ensureTip(svg){ const box=svg&&svg.parentElement; if(!box) return null; let tip=box.querySelector('.charttip'); if(!tip){ tip=document.createElement('div'); tip.className='charttip'; box.appendChild(tip); } return tip; }
+function hideTip(svg){ const box=svg&&svg.parentElement; if(box){ const t=box.querySelector('.charttip'); if(t) t.style.opacity='0'; } const mk=svg&&svg.querySelector('.mk'); if(mk) mk.style.opacity='0'; }
+function attachChartTip(svg, vals, labels, fmt, X, Y){
+  const box=svg.parentElement; if(box && getComputedStyle(box).position==='static') box.style.position='relative';
+  const tip=ensureTip(svg); const mk=svg.querySelector('.mk'), ml=svg.querySelector('.mk-l'), md=svg.querySelector('.mk-d'); const n=vals.length;
+  const move=(ev)=>{
+    const r=svg.getBoundingClientRect(); if(!r.width) return;
+    const cx=(ev.clientX!=null?ev.clientX:(ev.touches&&ev.touches[0]?ev.touches[0].clientX:r.left));
+    let ratio=(cx-r.left)/r.width; ratio=Math.max(0,Math.min(1,ratio));
+    const idx=Math.max(0,Math.min(n-1,Math.round(ratio*(n-1))));
+    const px=X(idx), py=Y(vals[idx]);
+    if(ml){ ml.setAttribute('x1',px.toFixed(2)); ml.setAttribute('x2',px.toFixed(2)); }
+    if(md){ md.setAttribute('cx',px.toFixed(2)); md.setAttribute('cy',py.toFixed(2)); }
+    if(mk) mk.style.opacity='1';
+    if(tip){ tip.textContent=fmt(vals[idx])+' · '+labels[idx]; tip.style.opacity='1'; const leftPx=(px/100)*r.width; tip.style.left=Math.max(4,Math.min(r.width-4, leftPx))+'px'; }
+    if(ev.cancelable) ev.preventDefault();
+  };
+  svg.style.touchAction='pan-y';
+  svg.onpointermove=move; svg.onpointerdown=move; svg.onpointerleave=()=>hideTip(svg);
 }
 
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -958,15 +1102,21 @@ function renderForecast(asc, rate){
   const jahr = totalCHF!=null ? totalCHF/spanDays*365 : null;
   const kmSpan = asc[asc.length-1].km_stand-asc[0].km_stand;
   const kmDay = kmSpan>0 ? kmSpan/spanDays : null;
-  const interval = spanDays/(ds.length-1);
-  const next = new Date(last.getTime()+interval*86400000);
-  const today=new Date(); today.setHours(0,0,0,0);
-  const din=Math.round((next-today)/86400000);
-  const ninTxt = din<=0?'überfällig':('in ~'+din+' Tag'+(din===1?'':'en'));
+  const fillDs = asc.filter(e=>Number(e.liter)>0).map(e=>e.datum).filter(Boolean).sort();
+  let nextTxt='–';
+  if(fillDs.length>=2){
+    const lf=new Date(fillDs[fillDs.length-1]+'T00:00:00');
+    const spanF=Math.max(1,Math.round((lf-new Date(fillDs[0]+'T00:00:00'))/86400000));
+    const interval=spanF/(fillDs.length-1);
+    const next=new Date(lf.getTime()+interval*86400000);
+    const today=new Date(); today.setHours(0,0,0,0);
+    const din=Math.round((next-today)/86400000);
+    nextTxt='≈ '+_fmtDate(next)+' · '+(din<=0?'überfällig':('in ~'+din+' Tag'+(din===1?'':'en')));
+  }
   const rows=[
     ['Hochrechnung Kosten / Jahr', jahr!=null?('≈ '+nf(jahr,0)+' CHF'):'–','pinkv'],
     ['Ø Fahrleistung', kmDay!=null?('≈ '+nf(kmDay,0)+' km / Tag'):'–','tealv'],
-    ['Nächste Tankung ca.', '≈ '+_fmtDate(next)+' · '+ninTxt,'']
+    ['Nächste Tankung ca.', nextTxt,'']
   ];
   box.innerHTML=rows.map(r=>`<div class="srow"><span class="sk">${r[0]}</span><span class="sv ${r[2]}">${r[1]}</span></div>`).join('');
 }
@@ -976,6 +1126,11 @@ function renderForecast(asc, rate){
 function accent(){ try{ return localStorage.getItem('tanklog_accent')||'#2dd4bf'; }catch(e){ return '#2dd4bf'; } }
 // Werksverbrauch / WLTP (L/100 km) oder null
 function wltpVal(){ const n=parseFloat(String(localStorage.getItem('tanklog_wltp')||'').replace(',','.')); return isFinite(n)&&n>0?n:null; }
+// Verbrauchseinheit (F1): intern wird immer in L/100 km gerechnet, hier nur Anzeige
+function consMode(){ const m=localStorage.getItem('tanklog_unit'); return (m==='kml'||m==='mpg')?m:'l100'; }
+function consUnit(){ const m=consMode(); return m==='kml'?'km/L':(m==='mpg'?'mpg':'L/100km'); }
+function convCons(l100){ if(l100==null||!isFinite(l100)||l100<=0) return null; const m=consMode(); return m==='kml'?100/l100:(m==='mpg'?235.215/l100:l100); }
+function fmtCons(l100, withUnit){ const v=convCons(l100); if(v==null) return '–'; return nf(v,1)+(withUnit?(' '+consUnit()):''); }
 
 // generische Monats-Balken (rendert SVG in box)
 function barsBox(box, keys, vals, color, tipFn, caption){
@@ -1019,7 +1174,57 @@ function renderKmBars(asc){
   barsBox(box, keys, vals, accent(), (k,v)=>k+': '+nf(v,0)+' km', 'km je Monat · max '+nf(mx,0)+' km');
 }
 
-// ---------- Count-up der Kennzahlen (nur beim ersten Laden) ----------
+// CO₂ kumulativ (Datums-Reihenfolge) + Vorjahresvergleich (Kalenderjahr)
+function renderCo2(asc){
+  const sv=$('#chart-co2'); if(!sv) return;
+  const byDate=asc.slice().filter(e=>e.datum).sort((a,b)=> a.datum<b.datum?-1:(a.datum>b.datum?1:0));
+  let run=0; const cum=byDate.map(e=>{ run+=Number(e.liter)*CO2_KG_PER_L; return run; });
+  drawChart('#chart-co2','#cur-co2', cum, v=>nf(v,0)+' kg', accent(), 0, null, byDate.map(e=>_fmtDate(e.datum)));
+  const cap=$('#co2-yoy'); if(!cap) return;
+  const yNow=new Date().getFullYear();
+  const sumY=y=>asc.reduce((s,e)=>s+((e.datum && +e.datum.slice(0,4)===y)?Number(e.liter)*CO2_KG_PER_L:0),0);
+  const cy=sumY(yNow), py=sumY(yNow-1);
+  if(cy>0 || py>0){ let t=yNow+': ≈ '+nf(cy,0)+' kg'; if(py>0){ const d=(cy-py)/py*100; t+=' · '+(yNow-1)+': ≈ '+nf(py,0)+' kg ('+(d>=0?'+':'')+nf(d,0)+'%)'; } cap.textContent=t; }
+  else cap.textContent='Noch keine Daten';
+}
+
+// ---------- Tank-Kalender / Heatmap (A4) ----------
+function renderHeatmap(asc){
+  const box=$('#heatmap'); if(!box) return;
+  const cap=$('#heat-cap');
+  const agg={};
+  asc.forEach(e=>{ if(Number(e.liter)<=0 || !e.datum) return; const k=e.datum; const a=agg[k]=agg[k]||{l:0,t:0,cur:{}}; a.l+=Number(e.liter); a.t+=Number(e.total); a.cur[e.waehrung]=(a.cur[e.waehrung]||0)+Number(e.total); });
+  if(!Object.keys(agg).length){ box.innerHTML=emptyRow('Noch keine Tankungen'); if(cap) cap.style.display='none'; return; }
+  if(cap) cap.style.display='';
+  const MON=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const _iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const today=new Date(todayLocal()+'T00:00:00');
+  const weeks=53;
+  const dow=(today.getDay()+6)%7;                 // Mo=0 … So=6
+  const start=new Date(today); start.setDate(today.getDate()-dow-(weeks-1)*7);   // Montag vor 52 Wochen
+  const maxL=Math.max(1,...Object.values(agg).map(a=>a.l));
+  const tier=l=> l<=0?0:(l>=maxL*0.75?4:(l>=maxL*0.5?3:(l>=maxL*0.25?2:1)));
+  const OP={1:.35,2:.55,3:.78,4:1};
+  const acc=accent();
+  const cell=10, gap=2, step=cell+gap, top=16, W=weeks*step, H=top+7*step;
+  let cells='', labels='', lastMon=-1;
+  const day=new Date(start);
+  for(let i=0;i<weeks*7;i++){
+    const col=Math.floor(i/7), row=i%7, k=_iso(day), x=col*step, y=top+row*step;
+    if(day<=today){
+      const a=agg[k], tg=a?tier(a.l):0;
+      const fill=tg>0?acc:'var(--line2)', op=tg>0?OP[tg]:.14;
+      const ttl=a?(k+': '+nf(a.l,1)+' L'):k;
+      cells+=`<rect data-date="${k}" x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${fill}" fill-opacity="${op}"><title>${ttl}</title></rect>`;
+    }
+    if(row===0){ const m=day.getMonth(); if(m!==lastMon){ lastMon=m; labels+=`<text x="${x}" y="11" font-size="8" fill="var(--muted)">${MON[m]}</text>`; } }
+    day.setDate(day.getDate()+1);
+  }
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Tank-Kalender">${labels}${cells}</svg>`;
+  box.onclick=ev=>{ const r=ev.target.closest('[data-date]'); if(!r||!cap) return; const k=r.getAttribute('data-date'); const a=agg[k];
+    if(a){ const cur=Object.keys(a.cur).sort((x,y)=>a.cur[y]-a.cur[x])[0]||'CHF'; cap.textContent=_fmtDate(k)+' · '+nf(a.l,1)+' L · '+nf(a.t,2)+' '+cur; }
+    else cap.textContent=_fmtDate(k)+' · keine Tankung'; };
+}
 let _countUpPending=true;
 function runCountUp(box){
   if(!box) return;
@@ -1054,13 +1259,16 @@ function checkMilestones(asc){
     localStorage.setItem('tanklog_milestones', JSON.stringify(reached));
     if(fresh.length){
       const label=r=> r[0]==='L' ? (nf(+r.slice(1),0)+' L getankt') : (r.slice(0,2)==='KM' ? (nf(+r.slice(2),0)+' km gefahren') : (r.slice(1)+' Tankungen erfasst'));
-      toast('ok','Meilenstein erreicht: '+label(fresh[fresh.length-1]));
+      toast('ok','Meilenstein erreicht: '+label(fresh[fresh.length-1])); haptic([15,40,15]);
     }
   }catch(e){}
 }
 
 // ---------- Add sheet ----------
-let curSel='CHF', fullSel=1, editingId=null, savePending=false, _lastFocus=null;
+let curSel='CHF', fullSel=1, typeSel='fill', editingId=null, savePending=false, _lastFocus=null;
+// km-only-Erkennung: echte Tankungen haben immer liter > 0
+function isKmOnly(e){ return Number(e.liter)===0; }
+function setType(t){ typeSel=(t==='km')?'km':'fill'; setSeg('#seg-type','data-type',typeSel); const ov=$('#add-overlay'); if(ov) ov.classList.toggle('kmmode', typeSel==='km'); }
 function openAdd(){
   editingId=null; savePending=false; $('#add-title').textContent='Neue Tankung'; $('#f-save').textContent='Speichern';
   $('#f-datum').value=todayLocal();
@@ -1068,6 +1276,7 @@ function openAdd(){
   $('#s-total').textContent='CHF';
   setSeg('#seg-cur','data-cur','CHF'); curSel='CHF'; $('#s-preis').textContent='CHF/L';
   setSeg('#seg-full','data-full','1'); fullSel=1;
+  setType('fill');
   // Vorlage/Schnellerfassung: Währung der letzten Tankung + Stammtankstelle vorbelegen
   if(ENTRIES.length){
     let recent=null; ENTRIES.forEach(e=>{ if(e.datum && (!recent || e.datum>recent.datum)) recent=e; });
@@ -1100,6 +1309,7 @@ function recalcFromTotal(){
 $('#f-liter').oninput=recalcTotal; $('#f-preis').oninput=recalcTotal; $('#f-total').oninput=recalcFromTotal;
 $('#seg-cur').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; curSel=b.dataset.cur; setSeg('#seg-cur','data-cur',curSel); $('#s-preis').textContent=curSel+'/L'; $('#s-total').textContent=curSel; recalcTotal(); };
 $('#seg-full').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; fullSel=+b.dataset.full; setSeg('#seg-full','data-full',fullSel); };
+$('#seg-type').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; setType(b.dataset.type); };
 $('#open-add').onclick=openAdd;
 $('#add-close').onclick=$('#add-cancel').onclick=()=>closeSheet($('#add-overlay'));
 
@@ -1113,20 +1323,20 @@ $('#f-save').onclick=async()=>{
   // Bearbeitung einer noch nicht synchronisierten Offline-Neuanlage: nie zum Server, nur die Queue anpassen
   if(editingId && isPendingId(editingId)){
     queueUpdate(editingId, obj); savePending=false;
-    closeSheet($('#add-overlay')); await loadData(); return;
+    closeSheet($('#add-overlay')); haptic(12); await loadData(); return;
   }
   $('#f-save').disabled=true;
   try{
     if(editingId){ const {error}=await sb.from('tankungen').update(obj).eq('id',editingId); if(error) throw error; unqueueOps(editingId); }
     else { const {error}=await sb.from('tankungen').insert(obj); if(error) throw error; }
     $('#f-save').disabled=false; savePending=false;
-    closeSheet($('#add-overlay'));
+    closeSheet($('#add-overlay')); haptic(12);
     await loadData();
   }catch(err){
     $('#f-save').disabled=false;
     if(isOfflineErr(err)){
       if(editingId){ queueUpdate(editingId, obj); } else { queueAdd(obj); }
-      savePending=false; closeSheet($('#add-overlay')); await loadData();
+      savePending=false; closeSheet($('#add-overlay')); haptic(12); await loadData();
       toast('ok', editingId?'Offline – Änderung wird synchronisiert.':'Offline – Eintrag wird synchronisiert.');
       return;
     }
@@ -1139,9 +1349,9 @@ async function delEntry(id){
   if(!await askConfirm('Diese Tankung wirklich löschen?','Löschen')) return false;
   try{
     const {error}=await sb.from('tankungen').delete().eq('id',id); if(error) throw error;
-    unqueueOps(id); await loadData(); toast('ok','Tankung gelöscht.'); return true;
+    unqueueOps(id); await loadData(); haptic(18); toast('ok','Tankung gelöscht.'); return true;
   }catch(err){
-    if(isOfflineErr(err)){ queueDelete(id); await loadData(); toast('ok','Offline – Löschung wird synchronisiert.'); return true; }
+    if(isOfflineErr(err)){ queueDelete(id); await loadData(); haptic(18); toast('ok','Offline – Löschung wird synchronisiert.'); return true; }
     toast('err', err.message||'Löschen fehlgeschlagen.'); return false;
   }
 }
@@ -1157,6 +1367,7 @@ function openSet(){
   drawQR($('#qr'), location.href);
 }
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
+{ const rb=$('#refresh-btn'); if(rb) rb.onclick=async()=>{ if(rb.classList.contains('spinning')) return; rb.classList.add('spinning'); try{ await loadData(); haptic(8); toast('ok','Aktualisiert.'); }catch(e){} rb.classList.remove('spinning'); }; }
 $('#set-close').onclick=()=>closeSheet($('#set-overlay'));
 $('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); closeSheet($('#set-overlay')); try{ await ensureRate(); }catch(e){} computeAndRender(); };
 $('#set-service-save').onclick=()=>{ const kmRaw=$('#set-service-km').value.trim(); const km=Math.round(pnum(kmRaw)); const date=$('#set-service-date').value||null; const obj={ km:(kmRaw&&!isNaN(km)&&km>0)?km:null, date:date }; if(!obj.km && !obj.date) localStorage.removeItem('tanklog_service'); else localStorage.setItem('tanklog_service', JSON.stringify(obj)); closeSheet($('#set-overlay')); toast('ok','Service-Ziel gespeichert.'); computeAndRender(); };
@@ -1192,6 +1403,22 @@ function applyAccent(){
 { const _sa=$('#seg-accent'); if(_sa) _sa.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_accent', b.dataset.accent); applyAccent(); if(!$('#screen-app').classList.contains('hidden')) computeAndRender(); }; }
 applyAccent();
 
+// ---------- Verbrauchseinheit (F1) ----------
+function applyUnitSeg(){ const seg=$('#seg-unit'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.unit===consMode())); }
+{ const _su=$('#seg-unit'); if(_su) _su.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_unit', b.dataset.unit); applyUnitSeg(); if(!$('#screen-app').classList.contains('hidden')) computeAndRender(); }; }
+applyUnitSeg();
+
+// ---------- Install-Hinweis (D2) ----------
+let _deferredInstall=null;
+function isStandalone(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone===true; }
+function showInstallNote(){ const n=$('#install-note'); if(!n) return; if(isStandalone() || localStorage.getItem('tanklog_install_dismiss')==='1'){ n.classList.add('hidden'); return; } n.classList.remove('hidden'); }
+function hideInstallNote(){ const n=$('#install-note'); if(n) n.classList.add('hidden'); }
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); _deferredInstall=e; const g=$('#install-go'); if(g) g.style.display=''; showInstallNote(); });
+window.addEventListener('appinstalled', ()=>{ _deferredInstall=null; hideInstallNote(); });
+{ const g=$('#install-go'); if(g) g.onclick=async()=>{ if(!_deferredInstall){ hideInstallNote(); return; } _deferredInstall.prompt(); try{ await _deferredInstall.userChoice; }catch(e){} _deferredInstall=null; hideInstallNote(); }; }
+{ const x=$('#install-x'); if(x) x.onclick=()=>{ localStorage.setItem('tanklog_install_dismiss','1'); hideInstallNote(); }; }
+(function(){ const ua=navigator.userAgent||''; const isIOS=/iphone|ipad|ipod/i.test(ua) && !window.MSStream; if(isIOS && !isStandalone() && localStorage.getItem('tanklog_install_dismiss')!=='1'){ const t=$('#install-text'), g=$('#install-go'); if(t) t.textContent='Zum Startbildschirm: Teilen-Symbol antippen, dann „Zum Home-Bildschirm".'; if(g) g.style.display='none'; showInstallNote(); } })();
+
 // ---------- Zeitraum-Filter (Dashboard) ----------
 function applyPeriodSeg(){
   const seg=$('#seg-period'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.period===_period));
@@ -1212,6 +1439,70 @@ $('#export-csv').onclick=()=>{
   const csv='\uFEFF'+head.join(';')+'\n'+rows.join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='tank-log_megane_'+todayLocal()+'.csv'; a.click();
+};
+$('#export-xls').onclick=()=>{
+  if(!ENTRIES.length){ toast('err','Keine Daten zum Export.'); return; }
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const heads=['Datum','KM-Stand','Tankmenge (L)','Literpreis','Total','Währung','Vollgetankt','Ort','Notiz'];
+  const cS=v=>`<Cell><Data ss:Type="String">${esc(v==null?'':v)}</Data></Cell>`;
+  const cN=v=>`<Cell><Data ss:Type="Number">${Number(v)||0}</Data></Cell>`;
+  const hdr='<Row>'+heads.map(h=>`<Cell ss:StyleID="hdr"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('')+'</Row>';
+  const body=ENTRIES.map(e=>'<Row>'+cS(e.datum)+cN(e.km_stand)+cN(e.liter)+cN(e.literpreis)+cN(e.total)+cS(e.waehrung)+cS(e.vollgetankt?'ja':'nein')+cS(e.ort||'')+cS(e.notiz||'')+'</Row>').join('');
+  const xml='<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n'
+    +'<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+    +'<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/></Style></Styles>'
+    +'<Worksheet ss:Name="Tankungen"><Table>'+hdr+body+'</Table></Worksheet></Workbook>';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel'}));
+  a.download='tank-log_megane_'+todayLocal()+'.xls'; a.click();
+  toast('ok', ENTRIES.length+' Tankungen als Excel-Datei exportiert.');
+};
+
+// ---------- Service-Historie (B4, lokal gespeichert) ----------
+function svcLoad(){ try{ return JSON.parse(localStorage.getItem('tanklog_servicelog')||'[]')||[]; }catch(e){ return []; } }
+function svcSave(arr){ try{ localStorage.setItem('tanklog_servicelog', JSON.stringify(arr)); }catch(e){} }
+let svcEditId=null, svcCur='CHF';
+function renderServiceLog(){
+  const box=$('#svc-list'); if(!box) return;
+  const arr=svcLoad().slice().sort((a,b)=> (String(a.datum)<String(b.datum)?1:(String(a.datum)>String(b.datum)?-1:0)));
+  if(!arr.length){ box.innerHTML=emptyRow('Noch keine Service-Einträge'); return; }
+  box.innerHTML=arr.map(s=>{
+    const d=s.datum?_fmtDate(s.datum):'–';
+    const k=(s.km!=null&&!isNaN(Number(s.km)))?(nf(Number(s.km),0)+' km'):'';
+    const c=(s.kosten!=null&&!isNaN(Number(s.kosten))&&Number(s.kosten)>0)?((k?' · ':'')+nf(Number(s.kosten),2)+' '+(s.waehrung||'CHF')):'';
+    return `<div class="srow svc-row" data-id="${escapeHtml(String(s.id))}"><span class="sk">${escapeHtml(s.art||'Service')} <span style="color:var(--muted);font-weight:600">· ${d}</span></span><span class="sv">${k}${c}</span></div>`;
+  }).join('');
+  box.querySelectorAll('.svc-row').forEach(r=>{ r.onclick=()=>{ const e=svcLoad().find(x=>String(x.id)===String(r.dataset.id)); if(e) openSvc(e); }; });
+}
+function openSvc(e){
+  svcEditId=e?e.id:null;
+  $('#svc-title').textContent=e?'Service bearbeiten':'Service erfassen';
+  $('#svc-datum').value=e?e.datum:todayLocal();
+  const curKm=ENTRIES.length?Math.max(...ENTRIES.map(x=>x.km_stand)):'';
+  $('#svc-km').value=e?(e.km!=null?e.km:''):(curKm||'');
+  $('#svc-art').value=e?(e.art||'Service'):'Service';
+  $('#svc-kosten').value=(e&&e.kosten!=null)?e.kosten:'';
+  svcCur=(e&&e.waehrung==='EUR')?'EUR':'CHF'; setSeg('#svc-seg-cur','data-cur',svcCur); $('#svc-cur').textContent=svcCur;
+  $('#svc-notiz').value=e?(e.notiz||''):'';
+  msg($('#svc-msg'),'',null);
+  $('#svc-delete').style.display=e?'':'none';
+  $('#svc-overlay').classList.remove('hidden');
+  _lastFocus=document.activeElement; setTimeout(()=>{ const k=$('#svc-km'); if(k) k.focus(); },60);
+}
+$('#svc-add').onclick=()=>openSvc(null);
+$('#svc-close').onclick=$('#svc-cancel').onclick=()=>closeSheet($('#svc-overlay'));
+$('#svc-seg-cur').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; svcCur=b.dataset.cur; setSeg('#svc-seg-cur','data-cur',svcCur); $('#svc-cur').textContent=svcCur; };
+$('#svc-save').onclick=()=>{
+  const datum=$('#svc-datum').value; if(!datum){ msg($('#svc-msg'),'err','Datum fehlt.'); return; }
+  const km=Math.round(pnum($('#svc-km').value)); const kosten=pnum($('#svc-kosten').value);
+  const obj={ id: svcEditId||('s'+Date.now()), datum, km:isNaN(km)?null:km, art:$('#svc-art').value||'Service', kosten:isNaN(kosten)?null:+kosten.toFixed(2), waehrung:svcCur, notiz:$('#svc-notiz').value.trim()||null };
+  let arr=svcLoad();
+  if(svcEditId) arr=arr.map(x=>String(x.id)===String(svcEditId)?obj:x); else arr.push(obj);
+  svcSave(arr); closeSheet($('#svc-overlay')); haptic(12); toast('ok','Service gespeichert.'); renderServiceLog();
+};
+$('#svc-delete').onclick=async()=>{
+  if(!svcEditId) return;
+  if(!await askConfirm('Diesen Service-Eintrag löschen?','Löschen')) return;
+  svcSave(svcLoad().filter(x=>String(x.id)!==String(svcEditId))); closeSheet($('#svc-overlay')); haptic(18); toast('ok','Service gelöscht.'); renderServiceLog();
 };
 
 
@@ -1289,11 +1580,23 @@ async function ensureRate(){
 
 
 // ---------- Bearbeiten / Validierung / Import / Offline ----------
-function gatherForm(){ return { datum:$('#f-datum').value, km:Math.round(pnum($('#f-km').value)), liter:pnum($('#f-liter').value), preis:pnum($('#f-preis').value), total:pnum($('#f-total').value), cur:curSel, voll:!!fullSel, ort:$('#f-ort').value.trim()||null, notiz:$('#f-notiz').value.trim()||null }; }
+function gatherForm(){
+  if(typeSel==='km'){ return { datum:$('#f-datum').value, km:Math.round(pnum($('#f-km').value)), liter:0, preis:0, total:0, cur:'CHF', voll:false, ort:$('#f-ort').value.trim()||null, notiz:$('#f-notiz').value.trim()||null, kmonly:true }; }
+  return { datum:$('#f-datum').value, km:Math.round(pnum($('#f-km').value)), liter:pnum($('#f-liter').value), preis:pnum($('#f-preis').value), total:pnum($('#f-total').value), cur:curSel, voll:!!fullSel, ort:$('#f-ort').value.trim()||null, notiz:$('#f-notiz').value.trim()||null, kmonly:false };
+}
 function validateForm(v){
   const errors=[],warnings=[];
   if(!v.datum) errors.push('Datum fehlt.');
   if(isNaN(v.km)||v.km<=0) errors.push('KM-Stand fehlt oder ist ungültig.');
+  if(v.kmonly){
+    if(errors.length) return {errors,warnings};
+    const others=ENTRIES.filter(e=>!e._pending && String(e.id)!==String(editingId));
+    if(others.length){
+      if(!editingId){ const maxKm=Math.max(...others.map(e=>e.km_stand)); if(v.km<=maxKm) warnings.push('Der KM-Stand ('+nf(v.km,0)+') ist nicht höher als der bisher höchste ('+nf(maxKm,0)+').'); }
+      if(others.some(e=>e.km_stand===v.km)) warnings.push('Es gibt bereits einen Eintrag mit demselben KM-Stand ('+nf(v.km,0)+') – evtl. ein Doppeleintrag?');
+    }
+    return {errors,warnings};
+  }
   if(isNaN(v.liter)||v.liter<=0) errors.push('Tankmenge muss grösser als 0 sein.');
   if((isNaN(v.preis)||v.preis<=0) && !isNaN(v.total)&&v.total>0 && !isNaN(v.liter)&&v.liter>0){ v.preis=+(v.total/v.liter).toFixed(3); }
   if(isNaN(v.preis)||v.preis<=0) errors.push('Literpreis muss grösser als 0 sein.');
@@ -1315,6 +1618,7 @@ function openEdit(e){
   $('#f-liter').value=e.liter; $('#f-preis').value=e.literpreis;
   curSel=(e.waehrung==='EUR')?'EUR':'CHF'; setSeg('#seg-cur','data-cur',curSel); $('#s-preis').textContent=curSel+'/L';
   fullSel=e.vollgetankt?1:0; setSeg('#seg-full','data-full',fullSel);
+  setType(isKmOnly(e)?'km':'fill');
   $('#f-ort').value=e.ort||''; $('#f-notiz').value=e.notiz||'';
   $('#f-total').value=Number(e.total).toFixed(2); $('#s-total').textContent=curSel;
   msg($('#add-msg'),'',null); $('#scan-status').className='scan-status';
@@ -1402,17 +1706,18 @@ function importCSV(text){
   const out=[]; let skipped=0; const seen=new Set(ENTRIES.map(e=>e.km_stand+'|'+e.datum));
   for(let i=1;i<rows.length;i++){ const r=rows[i];
     const km=parseInt(pnum(r[ci.km])), liter=pnum(r[ci.liter]);
-    let preis=ci.preis>=0?pnum(r[ci.preis]):NaN, total=ci.total>=0?pnum(r[ci.total]):NaN;
     const datum=ci.datum>=0?pdate(r[ci.datum]):null;
-    if(isNaN(km)||isNaN(liter)||liter<=0||!datum){ skipped++; continue; }
+    if(isNaN(km)||isNaN(liter)||liter<0||!datum){ skipped++; continue; }
     const key=km+'|'+datum; if(seen.has(key)){ skipped++; continue; } seen.add(key);
+    const ort=ci.ort>=0?(String(r[ci.ort]||'').trim()||null):null;
+    const notiz=ci.notiz>=0?(String(r[ci.notiz]||'').trim()||null):null;
+    if(liter===0){ out.push({datum,km_stand:km,liter:0,literpreis:0,total:0,waehrung:'CHF',vollgetankt:false,ort,notiz}); continue; }
+    let preis=ci.preis>=0?pnum(r[ci.preis]):NaN, total=ci.total>=0?pnum(r[ci.total]):NaN;
     if(isNaN(preis)&&!isNaN(total)&&liter) preis=+(total/liter).toFixed(3);
     if(isNaN(total)&&!isNaN(preis)) total=+(liter*preis).toFixed(2);
     if(isNaN(preis)||isNaN(total)){ skipped++; continue; }
     let w=ci.waehrung>=0?String(r[ci.waehrung]||'').toUpperCase():''; w=(w.indexOf('EUR')>=0||w.indexOf('\u20AC')>=0)?'EUR':'CHF';
     let voll=true; if(ci.voll>=0){ const vv=String(r[ci.voll]||'').toLowerCase().trim(); voll=!(vv==='nein'||vv==='false'||vv==='0'||vv==='no'||vv==='teil'); }
-    const ort=ci.ort>=0?(String(r[ci.ort]||'').trim()||null):null;
-    const notiz=ci.notiz>=0?(String(r[ci.notiz]||'').trim()||null):null;
     out.push({datum,km_stand:km,liter:+liter.toFixed(2),literpreis:+preis,total:+total,waehrung:w,vollgetankt:voll,ort,notiz});
   }
   return {rows:out,skipped};
@@ -1447,7 +1752,9 @@ function normRestore(arr){
   arr.forEach(o=>{
     if(!o||typeof o!=='object'){ skipped++; return; }
     const km=parseInt(o.km_stand), liter=Number(o.liter), datum=o.datum;
-    if(isNaN(km)||isNaN(liter)||liter<=0||!datum||!/^\d{4}-\d{2}-\d{2}$/.test(String(datum))){ skipped++; return; }
+    if(isNaN(km)||isNaN(liter)||liter<0||!datum||!/^\d{4}-\d{2}-\d{2}$/.test(String(datum))){ skipped++; return; }
+    const key0=km+'|'+datum;
+    if(liter===0){ if(seen.has(key0)){ skipped++; return; } seen.add(key0); out.push({datum:String(datum), km_stand:km, liter:0, literpreis:0, total:0, waehrung:'CHF', vollgetankt:false, ort:(o.ort?String(o.ort).trim():null)||null, notiz:(o.notiz?String(o.notiz).trim():null)||null}); return; }
     let preis=Number(o.literpreis), total=Number(o.total);
     if(isNaN(preis)&&!isNaN(total)&&liter) preis=+(total/liter).toFixed(3);
     if(isNaN(total)&&!isNaN(preis)) total=+(liter*preis).toFixed(2);
@@ -1497,18 +1804,18 @@ function buildReport(year){
   const avgP=(byCur[mainCur]&&byCur[mainCur].liter>0)?byCur[mainCur].wsum/byCur[mainCur].liter:null;
   const co2=totL*CO2_KG_PER_L;
   const M=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-  const mon={}; ya.forEach(e=>{ const m=+e.datum.slice(5,7)-1; mon[m]=mon[m]||{n:0,l:0,c:{}}; mon[m].n++; mon[m].l+=Number(e.liter); mon[m].c[e.waehrung]=(mon[m].c[e.waehrung]||0)+Number(e.total); });
+  const mon={}; ya.forEach(e=>{ if(Number(e.liter)<=0) return; const m=+e.datum.slice(5,7)-1; mon[m]=mon[m]||{n:0,l:0,c:{}}; mon[m].n++; mon[m].l+=Number(e.liter); mon[m].c[e.waehrung]=(mon[m].c[e.waehrung]||0)+Number(e.total); });
   function cellCost(mc){ const cs=Object.keys(mc); if(cs.length===1 && cs[0]==='CHF') return nf(mc.CHF,2)+' CHF'; if(!isNaN(rate)) return '≈ '+nf(cs.reduce((s,c)=>s+(c==='CHF'?mc[c]:mc[c]*rate),0),2)+' CHF'; return cs.map(c=>nf(mc[c],2)+' '+c).join(' / '); }
   let rows=''; for(let m=0;m<12;m++){ if(!mon[m]) continue; rows+='<tr><td>'+M[m]+'</td><td>'+mon[m].n+'</td><td>'+nf(mon[m].l,1)+'</td><td>'+cellCost(mon[m].c)+'</td></tr>'; }
   const tile=(k,v)=>'<div class="rt"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
   box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">'+VEHICLE+'</div>'
     +'<div class="rtot">'
-    +tile('Ø Verbrauch', avgV!=null?nf(avgV,1)+' L/100km':'–')
+    +tile('Ø Verbrauch', avgV!=null?fmtCons(avgV,true):'–')
     +tile('Strecke', km?nf(km,0)+' km':'–')
     +tile('Ausgaben', tot)
     +tile('Getankt', nf(totL,1)+' L')
     +tile('Ø Literpreis', avgP!=null?nf(avgP,3)+' '+mainCur:'–')
-    +tile('Tankungen', String(ya.length))
+    +tile('Tankungen', String(ya.filter(e=>Number(e.liter)>0).length))
     +tile('CO₂ (geschätzt)', nf(co2,0)+' kg')
     +(km>0?tile('CO₂ / km', nf(co2*1000/km,0)+' g'):'')
     +'</div>'
@@ -1536,6 +1843,8 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
 // ---------- Meldungen / Bestätigung / Suche / HEIC ----------
 let _ascCache=[], _toastT=null;
 function toast(type,txt){ const el=$('#toast'); if(!el) return; el.className='toast '+type; el.textContent=txt; el.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove('show'),3200); }
+// Dezentes haptisches Feedback (Android; iOS/Desktop ignorieren das stillschweigend)
+function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 function askConfirm(text,yes){ return new Promise(res=>{ const ov=$('#confirm-overlay'); $('#confirm-msg').textContent=text; $('#confirm-yes').textContent=yes||'OK'; ov.classList.remove('hidden'); setTimeout(()=>{ const n=$('#confirm-no'); if(n) n.focus(); },50); const done=v=>{ ov.classList.add('hidden'); res(v); }; $('#confirm-yes').onclick=()=>done(true); $('#confirm-no').onclick=()=>done(false); }); }
 function debounce(fn,ms){ let t; return function(){ const a=arguments, c=this; clearTimeout(t); t=setTimeout(()=>fn.apply(c,a),ms); }; }
 (function(){ const ls=$('#list-search'); if(ls){ const run=debounce(()=>renderList(ls.value),150); ls.oninput=run; } })();
@@ -1555,6 +1864,18 @@ function drawQR(canvas,text){
 }
 // HEIC-Umwandlung: lokal gebündelt, nur bei Bedarf geladen (Foto-Scan braucht ohnehin Netz)
 function ensureHeic(){ return new Promise((res,rej)=>{ if(window.heic2any) return res(); const sc=document.createElement('script'); sc.src='heic2any.min.js'; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('HEIC-Umwandlung nicht verfügbar.')); document.head.appendChild(sc); }); }
+// D3: heic2any auf iOS (dort sind Fotos HEIC) im Leerlauf vorab in den Cache holen –
+// so funktioniert der Beleg-Scan später auch offline, ohne den Start zu belasten.
+function warmHeicCache(){
+  try{
+    if(!navigator.onLine || window.heic2any || window.__heicWarmed) return;
+    const ua=navigator.userAgent||'', isIOS=/iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints||0)>1);
+    if(!isIOS) return;
+    window.__heicWarmed=true;
+    const run=()=>{ fetch('heic2any.min.js').catch(()=>{}); };
+    if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:9000}); else setTimeout(run,4000);
+  }catch(e){}
+}
 async function heicToJpeg(file){ await ensureHeic(); const out=await window.heic2any({blob:file,toType:'image/jpeg',quality:0.85}); return Array.isArray(out)?out[0]:out; }
 
 
@@ -1563,7 +1884,7 @@ const _obAdd=$('#ob-add'); if(_obAdd) _obAdd.onclick=()=>openAdd();
 { const _fdel=$('#f-delete'); if(_fdel) _fdel.onclick=async()=>{ if(!editingId) return; if(await delEntry(editingId)) closeSheet($('#add-overlay')); }; }
 // Backdrop schliesst Einstellungen; ESC schliesst Sheets; Fokus-Rückgabe + Fokus-Falle (Barrierefreiheit)
 function closeSheet(el){ if(!el) return; el.classList.add('hidden'); const f=_lastFocus; _lastFocus=null; if(f && document.contains(f) && typeof f.focus==='function'){ try{ f.focus(); }catch(e){} } }
-function _openOverlayEl(){ const ids=['#confirm-overlay','#report-overlay','#add-overlay','#set-overlay']; for(const id of ids){ const el=$(id); if(el && !el.classList.contains('hidden')) return el; } return null; }
+function _openOverlayEl(){ const ids=['#confirm-overlay','#report-overlay','#svc-overlay','#add-overlay','#set-overlay']; for(const id of ids){ const el=$(id); if(el && !el.classList.contains('hidden')) return el; } return null; }
 $('#set-overlay').addEventListener('click',e=>{ if(e.target===$('#set-overlay')) closeSheet($('#set-overlay')); });
 $('#report-overlay').addEventListener('click',e=>{ if(e.target===$('#report-overlay')) closeSheet($('#report-overlay')); });
 document.addEventListener('keydown',e=>{
@@ -1582,7 +1903,7 @@ document.addEventListener('keydown',e=>{
   if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.7 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.10 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 { const _vs=$('#veh-sub'); if(_vs) _vs.textContent=VEHICLE; const _vf=$('#veh-foot'); if(_vf) _vf.textContent=VEHICLE; const _lf=$('#lbl-fuel'); if(_lf) _lf.textContent=FUEL; }
 boot();
 </script>

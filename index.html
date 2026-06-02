@@ -169,6 +169,8 @@ input,select{font-family:inherit;}
 .seg{display:flex;background:var(--bg);border:1px solid var(--line2);border-radius:13px;padding:4px;gap:4px;}
 .seg button{flex:1;background:none;color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:700;transition:.15s;}
 .seg button.on{background:var(--teal);color:#06201c;box-shadow:0 4px 12px -5px rgba(45,212,191,.6);}
+.period{margin:16px 0 2px;}
+#seg-period button{padding:8px;font-size:12.5px;}
 .seg.amber button.on{background:var(--amber);color:#241400;box-shadow:0 4px 12px -5px rgba(227,168,91,.6);}
 .save-btn{width:100%;background:linear-gradient(100deg,#2dd4bf,#14b8a6);color:#062420;font-weight:800;font-size:14.5px;border-radius:14px;padding:16px;margin-top:6px;box-shadow:0 12px 28px -12px rgba(45,212,191,.5);transition:transform .12s;}
 .save-btn:active{transform:translateY(1px);}
@@ -297,6 +299,11 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <div id="data-view">
     <div id="offline-note" class="offline-note hidden">Offline – es werden zuletzt gespeicherte Daten angezeigt. Neue Einträge sowie Änderungen und Löschungen werden lokal gemerkt und automatisch synchronisiert, sobald du wieder online bist.</div>
     <!-- hero stats -->
+    <div class="period"><div class="seg" id="seg-period">
+      <button data-period="30">30 Tage</button>
+      <button data-period="365">12 Monate</button>
+      <button data-period="all" class="on">Gesamt</button>
+    </div></div>
     <div class="hero" id="hero"></div>
 
     <button class="add-btn" id="open-add">__PLUS__ Neue Tankung erfassen</button>
@@ -507,6 +514,9 @@ function withConsumption(asc){
   return asc;
 }
 
+let _period = (localStorage.getItem('tanklog_period')||'all');
+function periodCutoff(){ if(_period==='all') return null; const days=_period==='365'?365:30; const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-days); return d; }
+function inPeriod(e,cut){ if(!cut) return true; if(!e.datum) return false; const d=new Date(e.datum+'T00:00:00'); return d>=cut; }
 function computeAndRender(){
   const __empty=!ENTRIES.length; const __showOb=__empty && !loadError; const dv=$('#data-view'), ob=$('#onboarding');
   if(dv) dv.classList.toggle('hidden',__showOb); if(ob) ob.classList.toggle('hidden',!__showOb);
@@ -514,41 +524,51 @@ function computeAndRender(){
   if(__showOb) return;
   const asc = withConsumption(ENTRIES.slice().sort((a,b)=>a.km_stand-b.km_stand));
   const er = effectiveRate(); const rate = er?er.rate:NaN;
-  // aggregate verbrauch
-  let aggL=0,aggKm=0; asc.forEach(e=>{ if(e._v!=null){ aggL += e._v*e._segKm/100; aggKm += e._segKm; }});
+  const cut = periodCutoff();
+  const pe = asc.filter(e=>inPeriod(e,cut));               // Einträge im gewählten Zeitraum
+
+  // Verbrauch im Zeitraum (Volltank-Segmente, deren Abschluss im Zeitraum liegt)
+  const segs = pe.filter(e=>e._v!=null);
+  let aggL=0,aggKm=0; segs.forEach(e=>{ aggL += e._v*e._segKm/100; aggKm += e._segKm; });
   const avgV = aggKm>0 ? aggL/aggKm*100 : null;
-  const lastV = [...asc].reverse().find(e=>e._v!=null);
-  const totalKm = asc.length>1 ? asc[asc.length-1].km_stand - asc[0].km_stand : 0;
-  const byCur={};
-  asc.forEach(e=>{ const c=e.waehrung; byCur[c]=byCur[c]||{cost:0,liter:0,wsum:0}; byCur[c].cost+=Number(e.total); byCur[c].liter+=Number(e.liter); byCur[c].wsum+=Number(e.liter)*Number(e.literpreis); });
+  const lastV = segs.length ? segs[segs.length-1] : null;
+
+  // Strecke & Kosten im Zeitraum
+  const strecke = pe.length>1 ? pe[pe.length-1].km_stand - pe[0].km_stand : 0;
+  const byCur={}; pe.forEach(e=>{ const c=e.waehrung; byCur[c]=byCur[c]||{cost:0,liter:0}; byCur[c].cost+=Number(e.total); byCur[c].liter+=Number(e.liter); });
   const curs=Object.keys(byCur);
-
-  // HERO
-  const hero=$('#hero'); hero.innerHTML='';
-  hero.appendChild(stat('big','Ø Verbrauch', avgV!=null?nf(avgV,1):'–','L/100 km', lastV?('zuletzt '+nf(lastV._v,1)+' L/100 km'):'noch keine Volltank-Strecke', {spark: avgV!=null?asc.filter(e=>e._v!=null).map(e=>e._v):null, accent:'#2dd4bf'}));
-  // Ø Literpreis (Hauptwährung = häufigste)
   const mainCur = curs.sort((a,b)=>byCur[b].liter-byCur[a].liter)[0]||'CHF';
-  const avgP = byCur[mainCur] && byCur[mainCur].liter>0 ? byCur[mainCur].wsum/byCur[mainCur].liter : null;
-  hero.appendChild(stat('','Ø Literpreis', avgP!=null?nf(avgP,3):'–', mainCur+'/L', null, {accent:'#ff00aa'}));
-  hero.appendChild(stat('','Strecke total', totalKm?nf(totalKm,0):'–','km', asc.length+' Tankungen', {accent:'#2dd4bf'}));
+  let costCHF=null;
+  if(curs.length===1){ costCHF = (mainCur==='CHF') ? byCur.CHF.cost : (!isNaN(rate)?byCur[mainCur].cost*rate:null); }
+  else if(curs.length>1 && !isNaN(rate)){ costCHF = curs.reduce((s,c)=>s+(c==='CHF'?byCur[c].cost:byCur[c].cost*rate),0); }
 
-  // Kosten-Stat
-  let costTxt='', costHint='';
-  if(curs.length){
-    costTxt = nf(byCur[mainCur].cost,2); costHint = mainCur;
-    const other = curs.filter(c=>c!==mainCur);
-    if(other.length){ costHint = mainCur+' · '+other.map(c=>money(byCur[c].cost,c)).join(' · '); }
-    if(curs.length>1 && !isNaN(rate)){ const tot = curs.reduce((s,c)=> s + (c==='CHF'?byCur[c].cost:byCur[c].cost*rate),0); costTxt=nf(tot,2); const rd=(er&&er.date)?(' · '+er.date.split('-').reverse().join('.')):''; costHint='≈ CHF gesamt · Kurs '+nf(rate,3)+((er&&er.src==='manuell')?' (manuell)':rd); }
-  } else { costTxt='–'; }
-  hero.appendChild(stat('','Ausgaben', costTxt, curs.length<=1?mainCur:'', costHint, {accent:'#ff00aa', valColor:'#ff00aa'}));
+  const hero=$('#hero'); hero.innerHTML='';
+  // 1) Ø Verbrauch
+  const vHint = lastV ? ('zuletzt '+nf(lastV._v,1)+' L/100 km') : (pe.length ? 'keine Volltank-Strecke im Zeitraum' : 'keine Tankung in diesem Zeitraum');
+  hero.appendChild(stat('big','Ø Verbrauch', avgV!=null?nf(avgV,1):'–','L/100 km', vHint, {spark: segs.length>1?segs.map(e=>e._v):null, accent:'#2dd4bf'}));
+  // 2) Kosten / 100 km
+  let cphTxt='–', cphUnit='CHF', cphHint=null;
+  if(strecke>0){
+    if(costCHF!=null){ cphTxt=nf(costCHF/strecke*100,2); cphUnit='CHF'; if(curs.length>1||mainCur!=='CHF') cphHint='≈ via Kurs '+(isNaN(rate)?'–':nf(rate,3)); }
+    else if(curs.length===1){ cphTxt=nf(byCur[mainCur].cost/strecke*100,2); cphUnit=mainCur; }
+  }
+  hero.appendChild(stat('big','Kosten / 100 km', cphTxt, cphUnit, cphHint, {accent:'#2dd4bf'}));
+  // 3) Ausgaben (Zeitraum)
+  let costTxt='–', costUnit='', costHint=null;
+  if(curs.length===1){ costTxt=nf(byCur[mainCur].cost,2); costUnit=mainCur; }
+  else if(curs.length>1){
+    if(costCHF!=null){ costTxt=nf(costCHF,2); costUnit='CHF'; costHint='≈ gesamt · '+curs.map(c=>money(byCur[c].cost,c)).join(' · '); }
+    else { costHint=curs.map(c=>money(byCur[c].cost,c)).join(' · '); }
+  }
+  hero.appendChild(stat('','Ausgaben', costTxt, costUnit, costHint, {accent:'#ff00aa', valColor:'#ff00aa'}));
+  // 4) Strecke (Zeitraum)
+  hero.appendChild(stat('','Strecke', strecke?nf(strecke,0):'–','km', pe.length+' Tankung'+(pe.length===1?'':'en'), {accent:'#2dd4bf'}));
 
-  // charts
+  // charts (volle Historie)
   drawChart('#chart-v','#cur-v', asc.filter(e=>e._v!=null).map(e=>e._v), v=>nf(v,1)+' L/100km', '#2dd4bf');
   drawChart('#chart-p','#cur-p', asc.map(e=>Number(e.literpreis)), v=>nf(v,3), '#ff00aa');
 
-  // statistik
-  renderMoreStats(asc, rate);
-  // list via renderList (Suche/Filter)
+  renderMoreStats(asc);
   _ascCache = asc;
   $('#list-count').textContent = asc.length?asc.length+' Einträge':'';
   renderList($('#list-search') ? $('#list-search').value : '');
@@ -592,16 +612,18 @@ function renderList(query){
   });
   if(query && !shown) list.innerHTML='<div class="empty">Keine Treffer für „'+escapeHtml(query)+'".</div>';
 }
-function renderMoreStats(asc, rate){
+function renderMoreStats(asc){
   const box=$('#morestats'); if(!box) return;
   if(!asc.length){ box.innerHTML='<div class="srow"><span class="sk">Noch keine Daten</span><span class="sv">–</span></div>'; return; }
-  const now=new Date(), ym=now.toISOString().slice(0,7), y=String(now.getFullYear());
-  const sumP=(pred)=>{ const per={}; asc.forEach(e=>{ if(pred(e)) per[e.waehrung]=(per[e.waehrung]||0)+Number(e.total); }); const cs=Object.keys(per); if(!cs.length) return '–'; if(cs.length===1) return money(per[cs[0]],cs[0]); if(!isNaN(rate)){ const t=cs.reduce((sm,c)=>sm+(c==='CHF'?per[c]:per[c]*rate),0); return '≈ '+nf(t,2)+' CHF'; } return cs.map(c=>money(per[c],c)).join(' · '); };
   const vs=asc.filter(e=>e._v!=null).map(e=>e._v);
+  const segKms=asc.filter(e=>e._segKm!=null).map(e=>e._segKm);
   const totL=asc.reduce((sm,e)=>sm+Number(e.liter),0);
+  let lastTxt='–'; const lastDatum=asc.map(e=>e.datum).filter(Boolean).sort().slice(-1)[0];
+  if(lastDatum){ const a=new Date(lastDatum+'T00:00:00'); a.setHours(0,0,0,0); const t=new Date(); t.setHours(0,0,0,0); const days=Math.round((t-a)/86400000); lastTxt = days<=0?'heute':(days===1?'gestern':('vor '+days+' Tagen')); }
+  const avgRange = segKms.length ? segKms.reduce((s,v)=>s+v,0)/segKms.length : null;
   const rows=[
-    ['Diesen Monat', sumP(e=>e.datum&&e.datum.slice(0,7)===ym),'pinkv'],
-    ['Dieses Jahr', sumP(e=>e.datum&&e.datum.slice(0,4)===y),'pinkv'],
+    ['Letzte Tankung', lastTxt,''],
+    ['Ø km / Tankfüllung', avgRange!=null?nf(avgRange,0)+' km':'–','tealv'],
     ['Bester Verbrauch', vs.length?nf(Math.min(...vs),1)+' L/100km':'–','tealv'],
     ['Höchster Verbrauch', vs.length?nf(Math.max(...vs),1)+' L/100km':'–','tealv'],
     ['Total getankt', nf(totL,1)+' L',''],
@@ -750,6 +772,11 @@ function applyTheme(){
 if(window.matchMedia){ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ if((localStorage.getItem('tanklog_theme')||'system')==='system') applyTheme(); }); }catch(e){} }
 applyTheme();
 
+// ---------- Zeitraum-Filter (Dashboard) ----------
+function applyPeriodSeg(){ const seg=$('#seg-period'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.period===_period)); }
+{ const _sp=$('#seg-period'); if(_sp) _sp.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; _period=b.dataset.period; localStorage.setItem('tanklog_period',_period); applyPeriodSeg(); computeAndRender(); }; }
+applyPeriodSeg();
+
 // ---------- CSV ----------
 $('#export-csv').onclick=()=>{
   if(!ENTRIES.length){ toast('err','Keine Daten zum Export.'); return; }
@@ -842,13 +869,12 @@ function validateForm(v){
   if(isNaN(v.liter)||v.liter<=0) errors.push('Tankmenge muss grösser als 0 sein.');
   if(isNaN(v.preis)||v.preis<=0) errors.push('Literpreis muss grösser als 0 sein.');
   if(errors.length) return {errors,warnings};
-  if(!editingId && ENTRIES.length){
-    const real=ENTRIES.filter(e=>!e._pending);
-    if(real.length){ const maxKm=Math.max(...real.map(e=>e.km_stand));
-      if(v.km<=maxKm) warnings.push('Der KM-Stand ('+nf(v.km,0)+') ist nicht höher als der bisher höchste ('+nf(maxKm,0)+').');
-      const fulls=real.filter(e=>e.vollgetankt && e.km_stand<v.km);
-      if(v.voll && fulls.length){ const pf=Math.max(...fulls.map(e=>e.km_stand)); const dist=v.km-pf; if(dist>0){ const vb=v.liter/dist*100; if(vb<2.5||vb>25) warnings.push('Das ergäbe '+nf(vb,1)+' L/100 km – bitte KM-Stand und Tankmenge prüfen.'); } }
-    }
+  const others=ENTRIES.filter(e=>!e._pending && String(e.id)!==String(editingId));
+  if(others.length){
+    if(!editingId){ const maxKm=Math.max(...others.map(e=>e.km_stand)); if(v.km<=maxKm) warnings.push('Der KM-Stand ('+nf(v.km,0)+') ist nicht höher als der bisher höchste ('+nf(maxKm,0)+').'); }
+    if(others.some(e=>e.km_stand===v.km)) warnings.push('Es gibt bereits eine Tankung mit demselben KM-Stand ('+nf(v.km,0)+') – evtl. ein Doppeleintrag?');
+    const fulls=others.filter(e=>e.vollgetankt && e.km_stand<v.km);
+    if(v.voll && fulls.length){ const pf=Math.max(...fulls.map(e=>e.km_stand)); const dist=v.km-pf; if(dist>0){ const vb=v.liter/dist*100; if(vb<2.5||vb>25) warnings.push('Das ergäbe '+nf(vb,1)+' L/100 km – bitte KM-Stand und Tankmenge prüfen.'); } }
   }
   return {errors,warnings};
 }
@@ -1014,7 +1040,7 @@ document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return;
   if(!$('#add-overlay').classList.contains('hidden')){ $('#add-overlay').classList.add('hidden'); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ $('#set-overlay').classList.add('hidden'); return; }
 });
-const APP_VER='v1.2 · 2026-06-01'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.3 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 boot();
 </script>
 <div id="toast" class="toast"></div>

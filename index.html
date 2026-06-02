@@ -158,6 +158,26 @@ input,select{font-family:inherit;}
 .field{margin-bottom:14px;}
 .field > .label{display:flex;margin-bottom:7px;}
 .inp{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:13px;color:var(--ink);padding:13px 14px;font-size:15px;font-family:var(--sans);font-variant-numeric:tabular-nums;transition:.15s;}
+/* Jahresreport (druckoptimiert: eigene helle Farben, damit das PDF immer sauber ist) */
+.report{background:#fff;color:#13212a;border:1px solid var(--line2);border-radius:14px;padding:18px;}
+.report h3{font-size:16px;margin:0;color:#0b1012;font-weight:800;}
+.report .rsub{color:#5b6770;font-size:12.5px;margin:2px 0 0;}
+.report .rtot{display:flex;flex-wrap:wrap;gap:14px 18px;margin:16px 0 4px;}
+.report .rt{flex:1 1 40%;min-width:120px;}
+.report .rt .k{font-size:10.5px;color:#6b7780;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.report .rt .v{font-size:19px;font-weight:800;color:#0b1012;font-family:var(--mono);margin-top:1px;}
+.report table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
+.report th,.report td{padding:6px 4px;border-bottom:1px solid #e7ebee;text-align:right;}
+.report th:first-child,.report td:first-child{text-align:left;}
+.report th{color:#6b7780;font-weight:700;font-family:var(--sans);}
+.report td{color:#13212a;font-family:var(--mono);}
+@media print{
+  body > *{ display:none !important; }
+  #report-overlay{ display:block !important; position:static !important; inset:auto !important; background:#fff !important; padding:0 !important; backdrop-filter:none !important; }
+  #report-overlay .sheet{ position:static !important; transform:none !important; animation:none !important; max-height:none !important; height:auto !important; overflow:visible !important; box-shadow:none !important; border:none !important; border-radius:0 !important; background:#fff !important; padding:0 !important; width:auto !important; max-width:none !important; }
+  #report-overlay .sheet-h, #report-year, #report-overlay .field, #report-print, #report-close{ display:none !important; }
+  .report{ border:none !important; padding:0 !important; }
+}
 .inp:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);}
 .inp::placeholder{color:var(--faint);}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -229,6 +249,12 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .ob-card .add-btn{margin-bottom:14px;}
 .ob-hint{color:var(--faint);font-size:11.5px;line-height:1.5;}
 .offline-note{background:var(--amber-soft);border:1px solid rgba(227,168,91,.35);color:var(--amber);border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.45;margin-bottom:14px;font-weight:600;}
+.service-note{display:flex;align-items:center;gap:8px;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.45);color:var(--ink);border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.4;margin-bottom:14px;font-weight:600;}
+.service-note::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--teal);flex:0 0 auto;}
+.service-note.urgent{background:var(--amber-soft);border-color:rgba(227,168,91,.55);}
+.service-note.urgent::before{background:var(--amber);}
+.service-note.overdue{background:rgba(240,120,111,.14);border-color:rgba(240,120,111,.55);}
+.service-note.overdue::before{background:var(--red);}
 .tv-edit{display:flex;align-items:baseline;gap:6px;}
 .tv-inp{width:120px;text-align:right;background:none;border:none;outline:none;font-family:var(--serif);font-size:23px;color:var(--pink);font-variant-numeric:tabular-nums;padding:0;}
 .tv-inp::placeholder{color:rgba(255,0,170,.45);}
@@ -298,6 +324,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     </div>
     <div id="data-view">
     <div id="offline-note" class="offline-note hidden">Offline – es werden zuletzt gespeicherte Daten angezeigt. Neue Einträge sowie Änderungen und Löschungen werden lokal gemerkt und automatisch synchronisiert, sobald du wieder online bist.</div>
+    <div id="service-note" class="service-note hidden"></div>
     <!-- hero stats -->
     <div class="period"><div class="seg" id="seg-period">
       <button data-period="30">30 Tage</button>
@@ -318,6 +345,14 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <!-- statistik -->
     <div class="sec-h"><h2>Statistik</h2><span class="ln"></span></div>
     <div class="statcard" id="morestats"></div>
+
+    <!-- auswertung -->
+    <div class="sec-h"><h2>Auswertung</h2><span class="ln"></span></div>
+    <div class="statcard" id="insights"></div>
+
+    <!-- tankstellen -->
+    <div class="sec-h"><h2>Tankstellen</h2><span class="ln"></span></div>
+    <div class="statcard" id="stations"></div>
 
     <!-- list -->
     <div class="sec-h"><h2>Tankungen</h2><span class="ln"></span><span class="count" id="list-count"></span></div>
@@ -365,7 +400,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
         <button data-full="0">Teil­tankung</button>
       </div>
     </div>
-    <div class="field"><label class="label" for="f-ort">Ort / Tankstelle (optional)</label><input class="inp" id="f-ort" placeholder="z. B. Migrol Au SG"></div>
+    <div class="field"><label class="label" for="f-ort">Ort / Tankstelle (optional)</label><input class="inp" id="f-ort" list="ort-list" placeholder="z. B. Migrol Au SG"><datalist id="ort-list"></datalist></div>
     <button class="save-btn" id="f-save">Speichern</button>
     <button class="ghost" id="add-cancel">Abbrechen</button>
     <button class="ghost danger" id="f-delete" style="display:none">Tankung löschen</button>
@@ -390,11 +425,25 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     </div>
     <button class="save-btn" id="set-rate-save">Kurs speichern</button>
     <hr class="sep">
+    <div class="field"><span class="label">Service / Wartung</span>
+      <p class="help" style="margin-bottom:8px">Optional: nächster Service oder Ölwechsel. Sobald es näher rückt, erscheint oben auf dem Dashboard ein Hinweis. Leer lassen = aus.</p>
+      <div class="suffix"><input class="inp" id="set-service-km" type="text" inputmode="numeric" placeholder="z. B. 60000"><span class="s">km</span></div>
+      <input class="inp" id="set-service-date" type="date" style="margin-top:8px" aria-label="Service-Datum (optional)">
+    </div>
+    <button class="save-btn" id="set-service-save">Service-Ziel speichern</button>
+    <hr class="sep">
     <span class="label">Daten</span>
     <p class="help" style="margin-bottom:8px">Alte Tankliste als CSV importieren. Erkannte Spalten: datum, km_stand, liter, literpreis, total, waehrung, vollgetankt, ort (Semikolon oder Komma; Dezimalkomma erlaubt).</p>
     <input type="file" id="imp-file" accept=".csv,text/csv" style="display:none">
     <button class="ghost" id="imp-btn" style="margin-top:0">CSV importieren</button>
     <div class="scan-status" id="imp-status" style="margin-top:10px"></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="ghost" id="backup-btn" style="margin-top:0;flex:1">Backup (JSON)</button>
+      <button class="ghost" id="restore-btn" style="margin-top:0;flex:1">Wiederherstellen</button>
+    </div>
+    <input type="file" id="restore-file" accept=".json,application/json" style="display:none">
+    <p class="help" style="margin-top:8px">Backup lädt alle Tankungen als JSON-Datei herunter. Wiederherstellen liest eine solche Datei und fügt fehlende Einträge hinzu – exakte Doppel (gleicher km und Datum) werden übersprungen.</p>
+    <button class="ghost" id="report-open" style="margin-top:12px">Jahresreport ansehen</button>
     <hr class="sep">
     <span class="label">QR-Code dieser Seite</span>
     <p class="help" style="margin-bottom:8px">Zum Ausdrucken fürs Handschuhfach – einfach scannen, um hierher zu gelangen.</p>
@@ -403,6 +452,17 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     <button class="ghost" id="set-logout" style="margin-top:0">Abmelden</button>
     <button class="ghost" id="set-reset">Supabase-Verbindung zurücksetzen</button>
     <p class="help" id="set-info" style="margin-top:12px"></p>
+  </div>
+</div>
+
+<div id="report-overlay" class="overlay hidden">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="report-title">
+    <div class="sheet-h"><h2 id="report-title">Jahresreport</h2><button class="x" id="report-close">×</button></div>
+    <div class="field"><label class="label" for="report-year">Jahr</label>
+      <select class="inp" id="report-year"></select>
+    </div>
+    <div id="report-body"></div>
+    <button class="save-btn" id="report-print" style="margin-top:14px">Drucken / Als PDF speichern</button>
   </div>
 </div>
 
@@ -483,6 +543,19 @@ async function startApp(){
   $('#set-info').textContent = 'Angemeldet als '+((await sb.auth.getUser()).data.user?.email||'');
   try{ await flushQueue(); }catch(e){}
   await loadData();
+  maybeHandleSharedPhoto();
+}
+// Beleg-Foto, das per Android-Teilen-Menü an Tank-Log geschickt wurde, aufnehmen und scannen
+async function maybeHandleSharedPhoto(){
+  try{
+    if(location.search.indexOf('shared=1')<0) return;
+    history.replaceState(null,'',location.pathname);   // URL säubern, damit ein Reload nicht erneut auslöst
+    let blob=null;
+    try{ const cache=await caches.open('tanklog-share'); const r=await cache.match('shared-photo'); if(r){ blob=await r.blob(); await cache.delete('shared-photo'); } }catch(_){}
+    if(!blob || !blob.size) return;
+    openAdd();
+    await processPhotoFile(blob);
+  }catch(_){}
 }
 async function loadData(){
   const _l=$('#list'); if(_l && !_l.children.length) _l.innerHTML='<div class="loading-row"><span class="spin"></span> Lädt …</div>';
@@ -569,6 +642,10 @@ function computeAndRender(){
   drawChart('#chart-p','#cur-p', asc.map(e=>Number(e.literpreis)), v=>nf(v,3), '#ff00aa');
 
   renderMoreStats(asc);
+  renderInsights(asc, rate);
+  renderStations(asc, rate);
+  refreshOrtList();
+  renderService(asc);
   _ascCache = asc;
   $('#list-count').textContent = asc.length?asc.length+' Einträge':'';
   renderList($('#list-search') ? $('#list-search').value : '');
@@ -630,6 +707,66 @@ function renderMoreStats(asc){
     ['Tankungen', String(asc.length),'']
   ];
   box.innerHTML=rows.map(r=>`<div class="srow"><span class="sk">${r[0]}</span><span class="sv ${r[2]}">${r[1]}</span></div>`).join('');
+}
+
+// Auswertung: Ø Ausgaben/Monat, Saison-Verbrauch, CO₂-Schätzung (alle über die gesamte Historie)
+function renderInsights(asc, rate){
+  const box=$('#insights'); if(!box) return;
+  if(!asc.length){ box.innerHTML='<div class="srow"><span class="sk">Noch keine Daten</span><span class="sv">–</span></div>'; return; }
+  const byCur={}; asc.forEach(e=>{ byCur[e.waehrung]=(byCur[e.waehrung]||0)+Number(e.total); });
+  const cs=Object.keys(byCur);
+  let totalCHF=null;
+  if(cs.length===1){ totalCHF = cs[0]==='CHF'?byCur.CHF:(!isNaN(rate)?byCur[cs[0]]*rate:null); }
+  else if(cs.length>1 && !isNaN(rate)){ totalCHF = cs.reduce((s,c)=>s+(c==='CHF'?byCur[c]:byCur[c]*rate),0); }
+  const ds=asc.map(e=>e.datum).filter(Boolean).sort();
+  let months=1; if(ds.length>1){ const a=new Date(ds[0]+'T00:00:00'), b=new Date(ds[ds.length-1]+'T00:00:00'); months=Math.max(1,(b-a)/(1000*86400*30.4375)); }
+  const avgMon = totalCHF!=null ? totalCHF/months : null;
+  const seg=asc.filter(e=>e._v!=null);
+  const seas=(lo,hi,wrap)=>{ let L=0,K=0; seg.forEach(e=>{ const m=+e.datum.slice(5,7); const inS = wrap ? (m>=lo||m<=hi) : (m>=lo&&m<=hi); if(inS){ L+=e._v*e._segKm/100; K+=e._segKm; } }); return K>0?L/K*100:null; };
+  const sommer=seas(4,9,false), winter=seas(10,3,true);
+  const totL=asc.reduce((s,e)=>s+Number(e.liter),0);
+  const km=asc.length>1?asc[asc.length-1].km_stand-asc[0].km_stand:0;
+  const co2kg=totL*2.33, gkm = km>0 ? co2kg*1000/km : null;
+  const rows=[
+    ['Ø Ausgaben / Monat', avgMon!=null?('≈ '+nf(avgMon,2)+' CHF'):'–','pinkv'],
+    ['Verbrauch Sommer (Apr–Sep)', sommer!=null?nf(sommer,1)+' L/100km':'–','tealv'],
+    ['Verbrauch Winter (Okt–Mär)', winter!=null?nf(winter,1)+' L/100km':'–','tealv'],
+    ['CO₂ (geschätzt)', gkm!=null?('≈ '+nf(gkm,0)+' g/km'):'–',''],
+    ['CO₂ total (geschätzt)', '≈ '+nf(co2kg,0)+' kg','']
+  ];
+  box.innerHTML=rows.map(r=>`<div class="srow"><span class="sk">${r[0]}</span><span class="sv ${r[2]}">${r[1]}</span></div>`).join('');
+}
+
+// Tankstellen-Vergleich: mengengewichteter Ø Preis je Ort, günstigste zuerst
+function renderStations(asc, rate){
+  const box=$('#stations'); if(!box) return;
+  const map={};
+  asc.forEach(e=>{ const o=(e.ort||'').trim(); if(!o) return; const m=map[o]=map[o]||{n:0,liter:0,wsum:0,cur:{}}; m.n++; m.liter+=Number(e.liter); m.wsum+=Number(e.liter)*Number(e.literpreis); m.cur[e.waehrung]=(m.cur[e.waehrung]||0)+Number(e.liter); });
+  const list=Object.keys(map).map(o=>{ const m=map[o]; const cur=Object.keys(m.cur).sort((a,b)=>m.cur[b]-m.cur[a])[0]||'CHF'; const avg=m.liter>0?m.wsum/m.liter:0; const avgCHF=cur==='CHF'?avg:(!isNaN(rate)?avg*rate:avg); return {o,n:m.n,avg,cur,avgCHF}; });
+  if(!list.length){ box.innerHTML='<div class="srow"><span class="sk">Noch keine Orte erfasst</span><span class="sv">–</span></div><p class="help" style="margin:8px 2px 0">Tippe beim Erfassen eine Tankstelle ein – dann erscheint hier ein Preisvergleich.</p>'; return; }
+  list.sort((a,b)=>a.avgCHF-b.avgCHF);
+  box.innerHTML=list.map((s,i)=>`<div class="srow"><span class="sk">${escapeHtml(s.o)}${(i===0&&list.length>1)?' · günstigste':''} <span style="color:var(--muted);font-weight:600">· ${s.n}×</span></span><span class="sv ${i===0?'tealv':''}">${nf(s.avg,3)} ${s.cur}/L</span></div>`).join('');
+}
+
+// Bekannte Tankstellen in die Vorschlagsliste des Ort-Feldes füllen (häufigste zuerst)
+function refreshOrtList(){
+  const dl=$('#ort-list'); if(!dl) return;
+  const cnt={}; ENTRIES.forEach(e=>{ const o=(e.ort||'').trim(); if(o) cnt[o]=(cnt[o]||0)+1; });
+  const opts=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b));
+  dl.innerHTML=opts.map(o=>`<option value="${escapeHtml(o)}"></option>`).join('');
+}
+
+// Service-/Wartungs-Hinweis (km-Ziel und/oder Datum), erscheint nur wenn es näher rückt
+function renderService(asc){
+  const el=$('#service-note'); if(!el) return;
+  let s=null; try{ s=JSON.parse(localStorage.getItem('tanklog_service')||'null'); }catch(e){}
+  if(!s || (!s.km && !s.date) || !asc.length){ el.classList.add('hidden'); return; }
+  const curKm=Math.max(...asc.map(e=>e.km_stand));
+  const parts=[]; let urgent=false, overdue=false;
+  if(s.km){ const rem=s.km-curKm; if(rem<=1500){ if(rem<0){ overdue=true; parts.push('Service überfällig – '+nf(-rem,0)+' km drüber'); } else { if(rem<=300) urgent=true; parts.push('Service in noch '+nf(rem,0)+' km (bei '+nf(s.km,0)+')'); } } }
+  if(s.date){ const t=new Date(); t.setHours(0,0,0,0); const dd=new Date(s.date+'T00:00:00'); const days=Math.round((dd-t)/86400000); if(days<=30){ const ds=dd.toLocaleDateString('de-CH'); if(days<0){ overdue=true; parts.push('Termin '+(-days)+' Tage überfällig ('+ds+')'); } else { if(days<=7) urgent=true; parts.push('Service-Termin in '+days+' Tag'+(days===1?'':'en')+' ('+ds+')'); } } }
+  if(!parts.length){ el.classList.add('hidden'); return; }
+  el.className='service-note'+(overdue?' overdue':(urgent?' urgent':'')); el.textContent=parts.join(' · '); el.classList.remove('hidden');
 }
 
 function stat(cls,label,val,unit,hint,opts){
@@ -749,6 +886,7 @@ async function delEntry(id){
 function openSet(){
   $('#set-rate').value = localStorage.getItem(RATE_KEY)||'';
   { const er=effectiveRate(); $('#set-rate').placeholder = (er&&er.src==='auto')?('automatisch: '+nf(er.rate,3)+(er.date?(' · '+er.date.split('-').reverse().join('.')):'')):'automatisch (leer lassen)'; }
+  { let sv=null; try{ sv=JSON.parse(localStorage.getItem('tanklog_service')||'null'); }catch(e){} $('#set-service-km').value=(sv&&sv.km)?sv.km:''; $('#set-service-date').value=(sv&&sv.date)?sv.date:''; }
   $('#set-overlay').classList.remove('hidden');
   _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#set-close'); if(c) c.focus(); },60);
   drawQR($('#qr'), location.href);
@@ -756,6 +894,7 @@ function openSet(){
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
 $('#set-close').onclick=()=>$('#set-overlay').classList.add('hidden');
 $('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); $('#set-overlay').classList.add('hidden'); try{ await ensureRate(); }catch(e){} computeAndRender(); };
+$('#set-service-save').onclick=()=>{ const kmRaw=$('#set-service-km').value.trim(); const km=Math.round(pnum(kmRaw)); const date=$('#set-service-date').value||null; const obj={ km:(kmRaw&&!isNaN(km)&&km>0)?km:null, date:date }; if(!obj.km && !obj.date) localStorage.removeItem('tanklog_service'); else localStorage.setItem('tanklog_service', JSON.stringify(obj)); $('#set-overlay').classList.add('hidden'); toast('ok','Service-Ziel gespeichert.'); computeAndRender(); };
 $('#set-logout').onclick=async()=>{ if(!await askConfirm('Wirklich abmelden?','Abmelden')) return; await sb.auth.signOut(); $('#set-overlay').classList.add('hidden'); show('screen-auth'); };
 $('#set-reset').onclick=resetCfg;
 async function resetCfg(){ if(await askConfirm('Supabase-Verbindung auf diesem Gerät entfernen?','Entfernen')){ localStorage.removeItem(CFG_KEY); location.reload(); } }
@@ -792,18 +931,19 @@ $('#export-csv').onclick=()=>{
 function scanStatus(type,txt,spin){ const el=$('#scan-status'); el.className='scan-status show '+type; el.innerHTML=(spin?'<span class="spin"></span>':'')+'<span>'+txt+'</span>'; }
 $('#scan-btn').onclick=()=>{ const i=$('#f-photo-cam'); i.value=''; i.click(); };
 $('#file-btn').onclick=()=>{ const i=$('#f-photo'); i.value=''; i.click(); };
-async function handlePhoto(e){
-  const file=e.target.files&&e.target.files[0]; if(!file) return;
+async function processPhotoFile(file){
+  if(!file) return;
   try{
     scanStatus('work','Foto wird analysiert …', true);
     let src=file;
-    if(/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)){ scanStatus('work','HEIC wird umgewandelt …', true); src=await heicToJpeg(file); }
+    if(/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name||'')){ scanStatus('work','HEIC wird umgewandelt …', true); src=await heicToJpeg(file); }
     const b64=await downscale(src,1280,0.8);
     const o=await callVision(b64);
     fillFromScan(o);
     scanStatus('ok','Werte übernommen – bitte KM-Stand ergänzen und prüfen.');
   }catch(err){ scanStatus('err', err.message||'Erkennung fehlgeschlagen.'); }
 }
+async function handlePhoto(e){ const file=e.target.files&&e.target.files[0]; await processPhotoFile(file); }
 $('#f-photo').onchange=handlePhoto;
 $('#f-photo-cam').onchange=handlePhoto;
 function downscale(file,maxDim,q){
@@ -1001,6 +1141,103 @@ $('#imp-file').onchange=async(e)=>{
   }catch(err){ impStatus('err', err.message||'Import fehlgeschlagen.'); }
 };
 
+// ---------- Backup / Wiederherstellen (JSON) ----------
+$('#backup-btn').onclick=()=>{
+  if(!ENTRIES.length){ toast('err','Keine Daten für ein Backup.'); return; }
+  const keys=['datum','km_stand','liter','literpreis','total','waehrung','vollgetankt','ort'];
+  const entries=ENTRIES.map(e=>{ const o={}; keys.forEach(k=>o[k]=(e[k]!==undefined?e[k]:null)); return o; });
+  const data={app:'Tank-Log', version:1, exported:new Date().toISOString(), count:entries.length, entries};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download='tank-log_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  toast('ok', entries.length+' Tankungen als Backup gespeichert.');
+};
+function normRestore(arr){
+  const out=[]; let skipped=0; const seen=new Set(ENTRIES.map(e=>e.km_stand+'|'+e.datum));
+  arr.forEach(o=>{
+    if(!o||typeof o!=='object'){ skipped++; return; }
+    const km=parseInt(o.km_stand), liter=Number(o.liter), datum=o.datum;
+    if(isNaN(km)||isNaN(liter)||liter<=0||!datum||!/^\d{4}-\d{2}-\d{2}$/.test(String(datum))){ skipped++; return; }
+    let preis=Number(o.literpreis), total=Number(o.total);
+    if(isNaN(preis)&&!isNaN(total)&&liter) preis=+(total/liter).toFixed(3);
+    if(isNaN(total)&&!isNaN(preis)) total=+(liter*preis).toFixed(2);
+    if(isNaN(preis)||isNaN(total)){ skipped++; return; }
+    const key=km+'|'+datum; if(seen.has(key)){ skipped++; return; } seen.add(key);
+    const w=String(o.waehrung||'').toUpperCase().indexOf('EUR')>=0?'EUR':'CHF';
+    const voll=!(o.vollgetankt===false||o.vollgetankt===0||/^(nein|false|0|no|teil)$/i.test(String(o.vollgetankt)));
+    out.push({datum:String(datum), km_stand:km, liter:+liter.toFixed(2), literpreis:+preis, total:+total, waehrung:w, vollgetankt:voll, ort:(o.ort?String(o.ort).trim():null)||null});
+  });
+  return {rows:out, skipped};
+}
+$('#restore-btn').onclick=()=>{ $('#restore-file').value=''; $('#restore-file').click(); };
+$('#restore-file').onchange=async(e)=>{
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  try{
+    const text=await file.text(); let j; try{ j=JSON.parse(text); }catch(_){ toast('err','Datei ist kein gültiges JSON.'); return; }
+    const arr=Array.isArray(j)?j:(j&&Array.isArray(j.entries)?j.entries:null);
+    if(!arr){ toast('err','Kein Backup erkannt (erwartet Liste oder {entries:[…]}).'); return; }
+    const {rows,skipped}=normRestore(arr);
+    if(!rows.length){ toast('err','Keine neuen Einträge ('+skipped+' übersprungen / Duplikate).'); return; }
+    if(!await askConfirm(rows.length+(rows.length===1?' Eintrag':' Einträge')+' wiederherstellen'+(skipped?(' ('+skipped+' übersprungen / Duplikate)'):'')+'?','Wiederherstellen')) return;
+    const {error}=await sb.from('tankungen').insert(rows); if(error) throw error;
+    toast('ok', rows.length+' wiederhergestellt'+(skipped?(', '+skipped+' übersprungen'):'')+'.');
+    await loadData();
+  }catch(err){ toast('err', err.message||'Wiederherstellung fehlgeschlagen.'); }
+};
+
+// ---------- Jahresreport (druckoptimiert) ----------
+function buildReport(year){
+  const box=$('#report-body'); if(!box) return; year=String(year);
+  const ya=ENTRIES.filter(e=>e.datum && e.datum.slice(0,4)===year).slice().sort((a,b)=>a.km_stand-b.km_stand);
+  if(!ya.length){ box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">Renault Mégane Grandtour · 1.2 TCe</div><p style="color:#6b7780;margin-top:12px">Keine Tankungen in diesem Jahr.</p></div>'; return; }
+  const er=effectiveRate(); const rate=er?er.rate:NaN;
+  const allAsc=withConsumption(ENTRIES.slice().sort((a,b)=>a.km_stand-b.km_stand));
+  const segY=allAsc.filter(e=>e._v!=null && e.datum.slice(0,4)===year);
+  let aL=0,aK=0; segY.forEach(e=>{ aL+=e._v*e._segKm/100; aK+=e._segKm; });
+  const avgV=aK>0?aL/aK*100:null;
+  const byCur={}; ya.forEach(e=>{ const c=e.waehrung; byCur[c]=byCur[c]||{cost:0,liter:0,wsum:0}; byCur[c].cost+=Number(e.total); byCur[c].liter+=Number(e.liter); byCur[c].wsum+=Number(e.liter)*Number(e.literpreis); });
+  const curs=Object.keys(byCur);
+  let costCHF=null;
+  if(curs.length===1){ costCHF=curs[0]==='CHF'?byCur.CHF.cost:(!isNaN(rate)?byCur[curs[0]].cost*rate:null); }
+  else if(curs.length>1 && !isNaN(rate)){ costCHF=curs.reduce((s,c)=>s+(c==='CHF'?byCur[c].cost:byCur[c].cost*rate),0); }
+  let tot; if(costCHF!=null) tot='≈ '+nf(costCHF,2)+' CHF'; else if(curs.length===1) tot=nf(byCur[curs[0]].cost,2)+' '+curs[0]; else tot=curs.map(c=>nf(byCur[c].cost,2)+' '+c).join(' · ');
+  const totL=ya.reduce((s,e)=>s+Number(e.liter),0);
+  const km=ya.length>1?ya[ya.length-1].km_stand-ya[0].km_stand:0;
+  const mainCur=curs.slice().sort((a,b)=>byCur[b].liter-byCur[a].liter)[0]||'CHF';
+  const avgP=(byCur[mainCur]&&byCur[mainCur].liter>0)?byCur[mainCur].wsum/byCur[mainCur].liter:null;
+  const co2=totL*2.33;
+  const M=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const mon={}; ya.forEach(e=>{ const m=+e.datum.slice(5,7)-1; mon[m]=mon[m]||{n:0,l:0,c:{}}; mon[m].n++; mon[m].l+=Number(e.liter); mon[m].c[e.waehrung]=(mon[m].c[e.waehrung]||0)+Number(e.total); });
+  function cellCost(mc){ const cs=Object.keys(mc); if(cs.length===1 && cs[0]==='CHF') return nf(mc.CHF,2)+' CHF'; if(!isNaN(rate)) return '≈ '+nf(cs.reduce((s,c)=>s+(c==='CHF'?mc[c]:mc[c]*rate),0),2)+' CHF'; return cs.map(c=>nf(mc[c],2)+' '+c).join(' / '); }
+  let rows=''; for(let m=0;m<12;m++){ if(!mon[m]) continue; rows+='<tr><td>'+M[m]+'</td><td>'+mon[m].n+'</td><td>'+nf(mon[m].l,1)+'</td><td>'+cellCost(mon[m].c)+'</td></tr>'; }
+  const tile=(k,v)=>'<div class="rt"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
+  box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">Renault Mégane Grandtour · 1.2 TCe</div>'
+    +'<div class="rtot">'
+    +tile('Ø Verbrauch', avgV!=null?nf(avgV,1)+' L/100km':'–')
+    +tile('Strecke', km?nf(km,0)+' km':'–')
+    +tile('Ausgaben', tot)
+    +tile('Getankt', nf(totL,1)+' L')
+    +tile('Ø Literpreis', avgP!=null?nf(avgP,3)+' '+mainCur:'–')
+    +tile('Tankungen', String(ya.length))
+    +tile('CO₂ (geschätzt)', nf(co2,0)+' kg')
+    +(km>0?tile('CO₂ / km', nf(co2*1000/km,0)+' g'):'')
+    +'</div>'
+    +'<table><thead><tr><th>Monat</th><th>Tank.</th><th>Liter</th><th>Kosten</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'</div>';
+}
+function openReport(){
+  if(!ENTRIES.length){ toast('err','Keine Daten für einen Report.'); return; }
+  $('#set-overlay').classList.add('hidden');
+  const years=Array.from(new Set(ENTRIES.map(e=>e.datum&&e.datum.slice(0,4)).filter(Boolean))).sort((a,b)=>b.localeCompare(a));
+  const sel=$('#report-year'); sel.innerHTML=years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+  sel.value=years[0]; buildReport(years[0]);
+  $('#report-overlay').classList.remove('hidden');
+  _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#report-close'); if(c) c.focus(); },60);
+}
+$('#report-open').onclick=openReport;
+$('#report-close').onclick=()=>$('#report-overlay').classList.add('hidden');
+$('#report-year').onchange=()=>buildReport($('#report-year').value);
+$('#report-print').onclick=()=>window.print();
+
 // Service Worker (Offline-Shell)
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 
@@ -1035,12 +1272,14 @@ const _obAdd=$('#ob-add'); if(_obAdd) _obAdd.onclick=()=>openAdd();
 { const _fdel=$('#f-delete'); if(_fdel) _fdel.onclick=async()=>{ if(!editingId) return; if(await delEntry(editingId)) $('#add-overlay').classList.add('hidden'); }; }
 // Backdrop schliesst Einstellungen; ESC schliesst Sheets
 $('#set-overlay').addEventListener('click',e=>{ if(e.target===$('#set-overlay')) $('#set-overlay').classList.add('hidden'); });
+$('#report-overlay').addEventListener('click',e=>{ if(e.target===$('#report-overlay')) $('#report-overlay').classList.add('hidden'); });
 document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return;
   if(!$('#confirm-overlay').classList.contains('hidden')){ $('#confirm-no').click(); return; }
+  if(!$('#report-overlay').classList.contains('hidden')){ $('#report-overlay').classList.add('hidden'); return; }
   if(!$('#add-overlay').classList.contains('hidden')){ $('#add-overlay').classList.add('hidden'); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ $('#set-overlay').classList.add('hidden'); return; }
 });
-const APP_VER='v1.3 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.4 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 boot();
 </script>
 <div id="toast" class="toast"></div>

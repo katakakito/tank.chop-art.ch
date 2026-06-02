@@ -14,9 +14,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="qrcode.js"></script>
-<script>(function(){try{var p=localStorage.getItem('tanklog_theme')||'system';var d=(p==='dark')||(p!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<script src="supabase.min.js"></script>
+<script defer src="qrcode.js"></script>
+<script>(function(){try{var p=localStorage.getItem('tanklog_theme')||'system';var d=(p==='dark')||(p!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <style>
 :root{
   --bg:#0a0e11; --bg2:#121b20; --bg3:#18242b; --line:#213139; --line2:#2c4049;
@@ -308,7 +308,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 <div id="screen-app" class="hidden">
   <div class="top"><div class="wrap">
     <div class="logo">__PUMP__</div>
-    <div class="ttl"><h1>Tank-Log</h1><div class="sub">Renault Mégane Grandtour · 1.2 TCe</div></div>
+    <div class="ttl"><h1>Tank-Log</h1><div class="sub" id="veh-sub"></div></div>
     <button class="icon-btn" id="open-settings" title="Einstellungen" aria-label="Einstellungen">__GEAR__</button>
   </div></div>
 
@@ -364,14 +364,14 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
       <button class="tbtn" id="open-settings2">__GEAR__ Einstellungen</button>
     </div>
     </div>
-    <div class="footer">Renault Mégane Grandtour · <span id="app-ver"></span></div>
+    <div class="footer"><span id="veh-foot"></span> · <span id="app-ver"></span></div>
   </div>
 </div>
 
 <!-- ============ ADD SHEET ============ -->
 <div id="add-overlay" class="overlay hidden">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title">
-    <div class="sheet-h"><h2 id="add-title">Neue Tankung</h2><button class="x" id="add-close">×</button></div>
+    <div class="sheet-h"><h2 id="add-title">Neue Tankung</h2><button class="x" id="add-close" aria-label="Schliessen">×</button></div>
     <div id="add-msg"></div>
     <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none">
     <input type="file" id="f-photo" accept="image/*" style="display:none">
@@ -384,7 +384,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
     </div>
     <div class="two">
       <div class="field"><label class="label" for="f-liter">Tankmenge</label><div class="suffix"><input class="inp" id="f-liter" type="text" inputmode="decimal" placeholder="0.00"><span class="s">L</span></div></div>
-      <div class="field"><label class="label" for="f-preis">Literpreis B95</label><div class="suffix"><input class="inp" id="f-preis" type="text" inputmode="decimal" placeholder="0.000"><span class="s" id="s-preis">CHF/L</span></div></div>
+      <div class="field"><label class="label" for="f-preis">Literpreis <span id="lbl-fuel"></span></label><div class="suffix"><input class="inp" id="f-preis" type="text" inputmode="decimal" placeholder="0.000"><span class="s" id="s-preis">CHF/L</span></div></div>
     </div>
     <div class="total-line"><label class="label" for="f-total">Total Füllung</label>
       <div class="tv-edit"><input class="tv-inp" id="f-total" type="text" inputmode="decimal" placeholder="0.00"><span class="tv-cur" id="s-total">CHF</span></div></div>
@@ -410,7 +410,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 <!-- ============ SETTINGS SHEET ============ -->
 <div id="set-overlay" class="overlay hidden">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-title">
-    <div class="sheet-h"><h2 id="set-title">Einstellungen</h2><button class="x" id="set-close">×</button></div>
+    <div class="sheet-h"><h2 id="set-title">Einstellungen</h2><button class="x" id="set-close" aria-label="Schliessen">×</button></div>
     <div class="field"><span class="label">Darstellung</span>
       <div class="seg" id="seg-theme">
         <button data-theme-opt="system" class="on">System</button>
@@ -457,7 +457,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 
 <div id="report-overlay" class="overlay hidden">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="report-title">
-    <div class="sheet-h"><h2 id="report-title">Jahresreport</h2><button class="x" id="report-close">×</button></div>
+    <div class="sheet-h"><h2 id="report-title">Jahresreport</h2><button class="x" id="report-close" aria-label="Schliessen">×</button></div>
     <div class="field"><label class="label" for="report-year">Jahr</label>
       <select class="inp" id="report-year"></select>
     </div>
@@ -474,9 +474,13 @@ const I = {
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="#04201d" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>'
 };
-document.body.innerHTML = document.body.innerHTML
-  .replaceAll('__PUMP__', I.pump).replaceAll('__GEAR__', I.gear)
-  .replaceAll('__PLUS__', I.plus).replaceAll('__DL__', I.dl);
+(function(){
+  const map={'__PUMP__':I.pump,'__GEAR__':I.gear,'__PLUS__':I.plus,'__DL__':I.dl};
+  const hasTok=v=>/__(PUMP|GEAR|PLUS|DL)__/.test(v);
+  const tw=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode(n){ const p=n.parentNode?n.parentNode.nodeName:''; if(p==='SCRIPT'||p==='STYLE') return NodeFilter.FILTER_REJECT; return hasTok(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP; } });
+  const hits=[]; let n; while(n=tw.nextNode()){ hits.push(n); }
+  hits.forEach(t=>{ const span=document.createElement('span'); span.style.display='contents'; span.innerHTML=t.nodeValue.replace(/__PUMP__|__GEAR__|__PLUS__|__DL__/g,m=>map[m]); t.parentNode.replaceChild(span,t); });
+})();
 
 // ---------- Helpers ----------
 const $ = s => document.querySelector(s);
@@ -484,6 +488,15 @@ const CFG_KEY='tanklog_cfg', RATE_KEY='tanklog_eurchf';
 const ALLOW_REGISTER=false; // Einzelnutzer-Setup: In-App-Registrieren ausblenden (auf true setzen, falls je ein zweiter Account nötig)
 const nf = (n,d=2)=> new Intl.NumberFormat('de-CH',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
 const money = (n,c)=> c+' '+nf(n,2);
+// ---- zentrale Konstanten / Config ----
+const VEHICLE='Renault Mégane Grandtour · 1.2 TCe', FUEL='B95';
+const CO2_KG_PER_L=2.33;                 // Benzin, nur Verbrennung (Näherung ~2.31–2.37)
+const DAYS_PER_MONTH=30.4375;
+const PLAUS_MIN=2.5, PLAUS_MAX=25;       // plausibler Verbrauchsbereich L/100 km
+const SERVICE_KM_SOON=1500, SERVICE_KM_URGENT=300, SERVICE_DAYS_SOON=30, SERVICE_DAYS_URGENT=7;
+const PHOTO_MAXDIM=1280, PHOTO_QUALITY=0.8;
+// lokales Datum als YYYY-MM-DD (kein UTC-Versatz wie bei toISOString)
+const todayLocal=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 function show(id){['screen-config','screen-auth','screen-app'].forEach(s=>$('#'+s).classList.add('hidden'));$('#'+id).classList.remove('hidden');}
 function msg(el,type,txt){el.innerHTML = txt?`<div class="msg ${type}">${txt}</div>`:'';}
 
@@ -572,17 +585,21 @@ async function loadData(){
 
 // Verbrauch je Segment (Volltankung zu Volltankung)
 function withConsumption(asc){
-  let lastFullKm=null, segL=0;
+  let lastFullKm=null, segL=0, prevDatum=null;
   asc.forEach(e=>{
-    e._v=null; e._segKm=null;
+    e._v=null; e._segKm=null; e._anomaly=null;
+    if(prevDatum && e.datum && e.datum < prevDatum) e._anomaly='order';   // km steigt, Datum springt zurück
     if(lastFullKm!==null) segL += Number(e.liter);
     if(e.vollgetankt){
       if(lastFullKm!==null && e.km_stand>lastFullKm){
         e._segKm = e.km_stand-lastFullKm;
         e._v = segL/e._segKm*100;
+      } else if(lastFullKm!==null && e.km_stand<=lastFullKm && segL>0){
+        e._anomaly = e._anomaly || 'dup';                                 // gleicher/tieferer km bei Volltankung
       }
       lastFullKm=e.km_stand; segL=0;
     }
+    if(e.datum) prevDatum=e.datum;
   });
   return asc;
 }
@@ -610,7 +627,7 @@ function computeAndRender(){
   const strecke = pe.length>1 ? pe[pe.length-1].km_stand - pe[0].km_stand : 0;
   const byCur={}; pe.forEach(e=>{ const c=e.waehrung; byCur[c]=byCur[c]||{cost:0,liter:0}; byCur[c].cost+=Number(e.total); byCur[c].liter+=Number(e.liter); });
   const curs=Object.keys(byCur);
-  const mainCur = curs.sort((a,b)=>byCur[b].liter-byCur[a].liter)[0]||'CHF';
+  const mainCur = [...curs].sort((a,b)=>byCur[b].liter-byCur[a].liter)[0]||'CHF';
   let costCHF=null;
   if(curs.length===1){ costCHF = (mainCur==='CHF') ? byCur.CHF.cost : (!isNaN(rate)?byCur[mainCur].cost*rate:null); }
   else if(curs.length>1 && !isNaN(rate)){ costCHF = curs.reduce((s,c)=>s+(c==='CHF'?byCur[c].cost:byCur[c].cost*rate),0); }
@@ -666,6 +683,7 @@ function rowHtml(e){
           ${e.vollgetankt?'':'<span class="chip">Teiltankung</span>'}
           ${e.ort?`<span class="chip">${escapeHtml(e.ort)}</span>`:''}
           ${e._pending?`<span class="chip" style="color:var(--amber);border-color:rgba(227,168,91,.4);background:var(--amber-soft)">${e._pendingOp==='update'?'Änderung wartet':'wird synchronisiert'}</span>`:''}
+          ${e._anomaly?`<span class="chip" title="km-Stand und Datum passen nicht zusammen – bitte prüfen" style="color:var(--amber);border-color:rgba(227,168,91,.4);background:var(--amber-soft)">Daten prüfen</span>`:''}
         </div>
       </div>
       <div class="r2">
@@ -719,14 +737,14 @@ function renderInsights(asc, rate){
   if(cs.length===1){ totalCHF = cs[0]==='CHF'?byCur.CHF:(!isNaN(rate)?byCur[cs[0]]*rate:null); }
   else if(cs.length>1 && !isNaN(rate)){ totalCHF = cs.reduce((s,c)=>s+(c==='CHF'?byCur[c]:byCur[c]*rate),0); }
   const ds=asc.map(e=>e.datum).filter(Boolean).sort();
-  let months=1; if(ds.length>1){ const a=new Date(ds[0]+'T00:00:00'), b=new Date(ds[ds.length-1]+'T00:00:00'); months=Math.max(1,(b-a)/(1000*86400*30.4375)); }
+  let months=1; if(ds.length>1){ const a=new Date(ds[0]+'T00:00:00'), b=new Date(ds[ds.length-1]+'T00:00:00'); months=Math.max(1,(b-a)/(1000*86400*DAYS_PER_MONTH)); }
   const avgMon = totalCHF!=null ? totalCHF/months : null;
   const seg=asc.filter(e=>e._v!=null);
   const seas=(lo,hi,wrap)=>{ let L=0,K=0; seg.forEach(e=>{ const m=+e.datum.slice(5,7); const inS = wrap ? (m>=lo||m<=hi) : (m>=lo&&m<=hi); if(inS){ L+=e._v*e._segKm/100; K+=e._segKm; } }); return K>0?L/K*100:null; };
   const sommer=seas(4,9,false), winter=seas(10,3,true);
   const totL=asc.reduce((s,e)=>s+Number(e.liter),0);
   const km=asc.length>1?asc[asc.length-1].km_stand-asc[0].km_stand:0;
-  const co2kg=totL*2.33, gkm = km>0 ? co2kg*1000/km : null;
+  const co2kg=totL*CO2_KG_PER_L, gkm = km>0 ? co2kg*1000/km : null;
   const rows=[
     ['Ø Ausgaben / Monat', avgMon!=null?('≈ '+nf(avgMon,2)+' CHF'):'–','pinkv'],
     ['Verbrauch Sommer (Apr–Sep)', sommer!=null?nf(sommer,1)+' L/100km':'–','tealv'],
@@ -763,8 +781,8 @@ function renderService(asc){
   if(!s || (!s.km && !s.date) || !asc.length){ el.classList.add('hidden'); return; }
   const curKm=Math.max(...asc.map(e=>e.km_stand));
   const parts=[]; let urgent=false, overdue=false;
-  if(s.km){ const rem=s.km-curKm; if(rem<=1500){ if(rem<0){ overdue=true; parts.push('Service überfällig – '+nf(-rem,0)+' km drüber'); } else { if(rem<=300) urgent=true; parts.push('Service in noch '+nf(rem,0)+' km (bei '+nf(s.km,0)+')'); } } }
-  if(s.date){ const t=new Date(); t.setHours(0,0,0,0); const dd=new Date(s.date+'T00:00:00'); const days=Math.round((dd-t)/86400000); if(days<=30){ const ds=dd.toLocaleDateString('de-CH'); if(days<0){ overdue=true; parts.push('Termin '+(-days)+' Tage überfällig ('+ds+')'); } else { if(days<=7) urgent=true; parts.push('Service-Termin in '+days+' Tag'+(days===1?'':'en')+' ('+ds+')'); } } }
+  if(s.km){ const rem=s.km-curKm; if(rem<=SERVICE_KM_SOON){ if(rem<0){ overdue=true; parts.push('Service überfällig – '+nf(-rem,0)+' km drüber'); } else { if(rem<=SERVICE_KM_URGENT) urgent=true; parts.push('Service in noch '+nf(rem,0)+' km (bei '+nf(s.km,0)+')'); } } }
+  if(s.date){ const t=new Date(); t.setHours(0,0,0,0); const dd=new Date(s.date+'T00:00:00'); const days=Math.round((dd-t)/86400000); if(days<=SERVICE_DAYS_SOON){ const ds=dd.toLocaleDateString('de-CH'); if(days<0){ overdue=true; parts.push('Termin '+(-days)+' Tage überfällig ('+ds+')'); } else { if(days<=SERVICE_DAYS_URGENT) urgent=true; parts.push('Service-Termin in '+days+' Tag'+(days===1?'':'en')+' ('+ds+')'); } } }
   if(!parts.length){ el.classList.add('hidden'); return; }
   el.className='service-note'+(overdue?' overdue':(urgent?' urgent':'')); el.textContent=parts.join(' · '); el.classList.remove('hidden');
 }
@@ -808,14 +826,14 @@ function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'
 let curSel='CHF', fullSel=1, editingId=null, savePending=false, _lastFocus=null;
 function openAdd(){
   editingId=null; savePending=false; $('#add-title').textContent='Neue Tankung'; $('#f-save').textContent='Speichern';
-  $('#f-datum').value=new Date().toISOString().slice(0,10);
+  $('#f-datum').value=todayLocal();
   $('#f-km').value=''; $('#f-liter').value=''; $('#f-preis').value=''; $('#f-total').value=''; $('#f-ort').value='';
   $('#s-total').textContent='CHF';
   setSeg('#seg-cur','data-cur','CHF'); curSel='CHF'; $('#s-preis').textContent='CHF/L';
   setSeg('#seg-full','data-full','1'); fullSel=1;
   // prefill km hint with last
-  const last=ENTRIES.length?ENTRIES[ENTRIES.length-1].km_stand:null;
-  $('#f-km').placeholder = last?('> '+last):'0';
+  const last=ENTRIES.length?Math.max(...ENTRIES.map(e=>e.km_stand)):null;
+  $('#f-km').placeholder = last?('> '+nf(last,0)):'0';
   msg($('#add-msg'),'',null);
   $('#scan-status').className='scan-status';
   { const _fd=$('#f-delete'); if(_fd) _fd.style.display='none'; }
@@ -837,7 +855,7 @@ $('#f-liter').oninput=recalcTotal; $('#f-preis').oninput=recalcTotal; $('#f-tota
 $('#seg-cur').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; curSel=b.dataset.cur; setSeg('#seg-cur','data-cur',curSel); $('#s-preis').textContent=curSel+'/L'; $('#s-total').textContent=curSel; recalcTotal(); };
 $('#seg-full').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; fullSel=+b.dataset.full; setSeg('#seg-full','data-full',fullSel); };
 $('#open-add').onclick=openAdd;
-$('#add-close').onclick=$('#add-cancel').onclick=()=>$('#add-overlay').classList.add('hidden');
+$('#add-close').onclick=$('#add-cancel').onclick=()=>closeSheet($('#add-overlay'));
 
 $('#f-save').onclick=async()=>{
   const v=gatherForm();
@@ -849,20 +867,20 @@ $('#f-save').onclick=async()=>{
   // Bearbeitung einer noch nicht synchronisierten Offline-Neuanlage: nie zum Server, nur die Queue anpassen
   if(editingId && isPendingId(editingId)){
     queueUpdate(editingId, obj); savePending=false;
-    $('#add-overlay').classList.add('hidden'); await loadData(); return;
+    closeSheet($('#add-overlay')); await loadData(); return;
   }
   $('#f-save').disabled=true;
   try{
     if(editingId){ const {error}=await sb.from('tankungen').update(obj).eq('id',editingId); if(error) throw error; unqueueOps(editingId); }
     else { const {error}=await sb.from('tankungen').insert(obj); if(error) throw error; }
     $('#f-save').disabled=false; savePending=false;
-    $('#add-overlay').classList.add('hidden');
+    closeSheet($('#add-overlay'));
     await loadData();
   }catch(err){
     $('#f-save').disabled=false;
     if(isOfflineErr(err)){
       if(editingId){ queueUpdate(editingId, obj); } else { queueAdd(obj); }
-      savePending=false; $('#add-overlay').classList.add('hidden'); await loadData();
+      savePending=false; closeSheet($('#add-overlay')); await loadData();
       toast('ok', editingId?'Offline – Änderung wird synchronisiert.':'Offline – Eintrag wird synchronisiert.');
       return;
     }
@@ -892,9 +910,9 @@ function openSet(){
   drawQR($('#qr'), location.href);
 }
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
-$('#set-close').onclick=()=>$('#set-overlay').classList.add('hidden');
-$('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); $('#set-overlay').classList.add('hidden'); try{ await ensureRate(); }catch(e){} computeAndRender(); };
-$('#set-service-save').onclick=()=>{ const kmRaw=$('#set-service-km').value.trim(); const km=Math.round(pnum(kmRaw)); const date=$('#set-service-date').value||null; const obj={ km:(kmRaw&&!isNaN(km)&&km>0)?km:null, date:date }; if(!obj.km && !obj.date) localStorage.removeItem('tanklog_service'); else localStorage.setItem('tanklog_service', JSON.stringify(obj)); $('#set-overlay').classList.add('hidden'); toast('ok','Service-Ziel gespeichert.'); computeAndRender(); };
+$('#set-close').onclick=()=>closeSheet($('#set-overlay'));
+$('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); closeSheet($('#set-overlay')); try{ await ensureRate(); }catch(e){} computeAndRender(); };
+$('#set-service-save').onclick=()=>{ const kmRaw=$('#set-service-km').value.trim(); const km=Math.round(pnum(kmRaw)); const date=$('#set-service-date').value||null; const obj={ km:(kmRaw&&!isNaN(km)&&km>0)?km:null, date:date }; if(!obj.km && !obj.date) localStorage.removeItem('tanklog_service'); else localStorage.setItem('tanklog_service', JSON.stringify(obj)); closeSheet($('#set-overlay')); toast('ok','Service-Ziel gespeichert.'); computeAndRender(); };
 $('#set-logout').onclick=async()=>{ if(!await askConfirm('Wirklich abmelden?','Abmelden')) return; await sb.auth.signOut(); $('#set-overlay').classList.add('hidden'); show('screen-auth'); };
 $('#set-reset').onclick=resetCfg;
 async function resetCfg(){ if(await askConfirm('Supabase-Verbindung auf diesem Gerät entfernen?','Entfernen')){ localStorage.removeItem(CFG_KEY); location.reload(); } }
@@ -904,6 +922,7 @@ function applyTheme(){
   const pref=localStorage.getItem('tanklog_theme')||'system';
   const dark = pref==='dark' || (pref!=='light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  document.documentElement.style.colorScheme = dark?'dark':'light';
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', dark?'#0b1012':'#eceff1');
   const seg=$('#seg-theme'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.themeOpt===pref));
 }
@@ -923,7 +942,7 @@ $('#export-csv').onclick=()=>{
   const rows=ENTRIES.map(e=>head.map(k=>{ let v=e[k]; if(k==='vollgetankt')v=v?'ja':'nein'; if(v==null)v=''; return /[",;\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v; }).join(';'));
   const csv='\uFEFF'+head.join(';')+'\n'+rows.join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='tank-log_megane_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  a.download='tank-log_megane_'+todayLocal()+'.csv'; a.click();
 };
 
 
@@ -937,7 +956,7 @@ async function processPhotoFile(file){
     scanStatus('work','Foto wird analysiert …', true);
     let src=file;
     if(/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name||'')){ scanStatus('work','HEIC wird umgewandelt …', true); src=await heicToJpeg(file); }
-    const b64=await downscale(src,1280,0.8);
+    const b64=await downscale(src,PHOTO_MAXDIM,PHOTO_QUALITY);
     const o=await callVision(b64);
     fillFromScan(o);
     scanStatus('ok','Werte übernommen – bitte KM-Stand ergänzen und prüfen.');
@@ -1007,6 +1026,7 @@ function validateForm(v){
   if(!v.datum) errors.push('Datum fehlt.');
   if(isNaN(v.km)||v.km<=0) errors.push('KM-Stand fehlt oder ist ungültig.');
   if(isNaN(v.liter)||v.liter<=0) errors.push('Tankmenge muss grösser als 0 sein.');
+  if((isNaN(v.preis)||v.preis<=0) && !isNaN(v.total)&&v.total>0 && !isNaN(v.liter)&&v.liter>0){ v.preis=+(v.total/v.liter).toFixed(3); }
   if(isNaN(v.preis)||v.preis<=0) errors.push('Literpreis muss grösser als 0 sein.');
   if(errors.length) return {errors,warnings};
   const others=ENTRIES.filter(e=>!e._pending && String(e.id)!==String(editingId));
@@ -1014,7 +1034,7 @@ function validateForm(v){
     if(!editingId){ const maxKm=Math.max(...others.map(e=>e.km_stand)); if(v.km<=maxKm) warnings.push('Der KM-Stand ('+nf(v.km,0)+') ist nicht höher als der bisher höchste ('+nf(maxKm,0)+').'); }
     if(others.some(e=>e.km_stand===v.km)) warnings.push('Es gibt bereits eine Tankung mit demselben KM-Stand ('+nf(v.km,0)+') – evtl. ein Doppeleintrag?');
     const fulls=others.filter(e=>e.vollgetankt && e.km_stand<v.km);
-    if(v.voll && fulls.length){ const pf=Math.max(...fulls.map(e=>e.km_stand)); const dist=v.km-pf; if(dist>0){ const vb=v.liter/dist*100; if(vb<2.5||vb>25) warnings.push('Das ergäbe '+nf(vb,1)+' L/100 km – bitte KM-Stand und Tankmenge prüfen.'); } }
+    if(v.voll && fulls.length){ const pf=Math.max(...fulls.map(e=>e.km_stand)); const dist=v.km-pf; if(dist>0){ const vb=v.liter/dist*100; if(vb<PLAUS_MIN||vb>PLAUS_MAX) warnings.push('Das ergäbe '+nf(vb,1)+' L/100 km – bitte KM-Stand und Tankmenge prüfen.'); } }
   }
   return {errors,warnings};
 }
@@ -1110,12 +1130,13 @@ function importCSV(text){
   const find=(...keys)=>{ for(const k of keys){ const i=head.findIndex(h=>h.includes(k)); if(i>=0) return i; } return -1; };
   const ci={ datum:find('datum','date'), km:find('km','kilom'), liter:find('liter','menge','litre'), preis:find('literpreis','preis','price'), total:find('total','betrag','summe','amount'), waehrung:find('waehrung','währung','curr','whrg'), voll:find('vollgetankt','voll','full'), ort:find('ort','tankstelle','station') };
   if(ci.km<0||ci.liter<0) throw new Error('Spalten „km_stand" und „liter" sind erforderlich.');
-  const out=[]; let skipped=0;
+  const out=[]; let skipped=0; const seen=new Set(ENTRIES.map(e=>e.km_stand+'|'+e.datum));
   for(let i=1;i<rows.length;i++){ const r=rows[i];
     const km=parseInt(pnum(r[ci.km])), liter=pnum(r[ci.liter]);
     let preis=ci.preis>=0?pnum(r[ci.preis]):NaN, total=ci.total>=0?pnum(r[ci.total]):NaN;
     const datum=ci.datum>=0?pdate(r[ci.datum]):null;
     if(isNaN(km)||isNaN(liter)||liter<=0||!datum){ skipped++; continue; }
+    const key=km+'|'+datum; if(seen.has(key)){ skipped++; continue; } seen.add(key);
     if(isNaN(preis)&&!isNaN(total)&&liter) preis=+(total/liter).toFixed(3);
     if(isNaN(total)&&!isNaN(preis)) total=+(liter*preis).toFixed(2);
     if(isNaN(preis)||isNaN(total)){ skipped++; continue; }
@@ -1148,7 +1169,7 @@ $('#backup-btn').onclick=()=>{
   const entries=ENTRIES.map(e=>{ const o={}; keys.forEach(k=>o[k]=(e[k]!==undefined?e[k]:null)); return o; });
   const data={app:'Tank-Log', version:1, exported:new Date().toISOString(), count:entries.length, entries};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download='tank-log_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  a.download='tank-log_backup_'+todayLocal()+'.json'; a.click();
   toast('ok', entries.length+' Tankungen als Backup gespeichert.');
 };
 function normRestore(arr){
@@ -1188,7 +1209,7 @@ $('#restore-file').onchange=async(e)=>{
 function buildReport(year){
   const box=$('#report-body'); if(!box) return; year=String(year);
   const ya=ENTRIES.filter(e=>e.datum && e.datum.slice(0,4)===year).slice().sort((a,b)=>a.km_stand-b.km_stand);
-  if(!ya.length){ box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">Renault Mégane Grandtour · 1.2 TCe</div><p style="color:#6b7780;margin-top:12px">Keine Tankungen in diesem Jahr.</p></div>'; return; }
+  if(!ya.length){ box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">'+VEHICLE+'</div><p style="color:#6b7780;margin-top:12px">Keine Tankungen in diesem Jahr.</p></div>'; return; }
   const er=effectiveRate(); const rate=er?er.rate:NaN;
   const allAsc=withConsumption(ENTRIES.slice().sort((a,b)=>a.km_stand-b.km_stand));
   const segY=allAsc.filter(e=>e._v!=null && e.datum.slice(0,4)===year);
@@ -1204,13 +1225,13 @@ function buildReport(year){
   const km=ya.length>1?ya[ya.length-1].km_stand-ya[0].km_stand:0;
   const mainCur=curs.slice().sort((a,b)=>byCur[b].liter-byCur[a].liter)[0]||'CHF';
   const avgP=(byCur[mainCur]&&byCur[mainCur].liter>0)?byCur[mainCur].wsum/byCur[mainCur].liter:null;
-  const co2=totL*2.33;
+  const co2=totL*CO2_KG_PER_L;
   const M=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
   const mon={}; ya.forEach(e=>{ const m=+e.datum.slice(5,7)-1; mon[m]=mon[m]||{n:0,l:0,c:{}}; mon[m].n++; mon[m].l+=Number(e.liter); mon[m].c[e.waehrung]=(mon[m].c[e.waehrung]||0)+Number(e.total); });
   function cellCost(mc){ const cs=Object.keys(mc); if(cs.length===1 && cs[0]==='CHF') return nf(mc.CHF,2)+' CHF'; if(!isNaN(rate)) return '≈ '+nf(cs.reduce((s,c)=>s+(c==='CHF'?mc[c]:mc[c]*rate),0),2)+' CHF'; return cs.map(c=>nf(mc[c],2)+' '+c).join(' / '); }
   let rows=''; for(let m=0;m<12;m++){ if(!mon[m]) continue; rows+='<tr><td>'+M[m]+'</td><td>'+mon[m].n+'</td><td>'+nf(mon[m].l,1)+'</td><td>'+cellCost(mon[m].c)+'</td></tr>'; }
   const tile=(k,v)=>'<div class="rt"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
-  box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">Renault Mégane Grandtour · 1.2 TCe</div>'
+  box.innerHTML='<div class="report"><h3>Jahresreport '+year+'</h3><div class="rsub">'+VEHICLE+'</div>'
     +'<div class="rtot">'
     +tile('Ø Verbrauch', avgV!=null?nf(avgV,1)+' L/100km':'–')
     +tile('Strecke', km?nf(km,0)+' km':'–')
@@ -1234,7 +1255,7 @@ function openReport(){
   _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#report-close'); if(c) c.focus(); },60);
 }
 $('#report-open').onclick=openReport;
-$('#report-close').onclick=()=>$('#report-overlay').classList.add('hidden');
+$('#report-close').onclick=()=>closeSheet($('#report-overlay'));
 $('#report-year').onchange=()=>buildReport($('#report-year').value);
 $('#report-print').onclick=()=>window.print();
 
@@ -1269,17 +1290,30 @@ async function heicToJpeg(file){ await ensureHeic(); const out=await window.heic
 
 const _obAdd=$('#ob-add'); if(_obAdd) _obAdd.onclick=()=>openAdd();
 // Löschen im Bearbeiten-Dialog
-{ const _fdel=$('#f-delete'); if(_fdel) _fdel.onclick=async()=>{ if(!editingId) return; if(await delEntry(editingId)) $('#add-overlay').classList.add('hidden'); }; }
-// Backdrop schliesst Einstellungen; ESC schliesst Sheets
-$('#set-overlay').addEventListener('click',e=>{ if(e.target===$('#set-overlay')) $('#set-overlay').classList.add('hidden'); });
-$('#report-overlay').addEventListener('click',e=>{ if(e.target===$('#report-overlay')) $('#report-overlay').classList.add('hidden'); });
-document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return;
+{ const _fdel=$('#f-delete'); if(_fdel) _fdel.onclick=async()=>{ if(!editingId) return; if(await delEntry(editingId)) closeSheet($('#add-overlay')); }; }
+// Backdrop schliesst Einstellungen; ESC schliesst Sheets; Fokus-Rückgabe + Fokus-Falle (Barrierefreiheit)
+function closeSheet(el){ if(!el) return; el.classList.add('hidden'); const f=_lastFocus; _lastFocus=null; if(f && document.contains(f) && typeof f.focus==='function'){ try{ f.focus(); }catch(e){} } }
+function _openOverlayEl(){ const ids=['#confirm-overlay','#report-overlay','#add-overlay','#set-overlay']; for(const id of ids){ const el=$(id); if(el && !el.classList.contains('hidden')) return el; } return null; }
+$('#set-overlay').addEventListener('click',e=>{ if(e.target===$('#set-overlay')) closeSheet($('#set-overlay')); });
+$('#report-overlay').addEventListener('click',e=>{ if(e.target===$('#report-overlay')) closeSheet($('#report-overlay')); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    const ov=_openOverlayEl(); if(!ov) return;
+    const list=Array.from(ov.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(el=>el.offsetParent!==null);
+    if(!list.length) return;
+    const first=list[0], last=list[list.length-1];
+    if(e.shiftKey){ if(document.activeElement===first || !ov.contains(document.activeElement)){ e.preventDefault(); last.focus(); } }
+    else { if(document.activeElement===last || !ov.contains(document.activeElement)){ e.preventDefault(); first.focus(); } }
+    return;
+  }
+  if(e.key!=='Escape') return;
   if(!$('#confirm-overlay').classList.contains('hidden')){ $('#confirm-no').click(); return; }
-  if(!$('#report-overlay').classList.contains('hidden')){ $('#report-overlay').classList.add('hidden'); return; }
-  if(!$('#add-overlay').classList.contains('hidden')){ $('#add-overlay').classList.add('hidden'); return; }
-  if(!$('#set-overlay').classList.contains('hidden')){ $('#set-overlay').classList.add('hidden'); return; }
+  if(!$('#report-overlay').classList.contains('hidden')){ closeSheet($('#report-overlay')); return; }
+  if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
+  if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.4 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.5 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+{ const _vs=$('#veh-sub'); if(_vs) _vs.textContent=VEHICLE; const _vf=$('#veh-foot'); if(_vf) _vf.textContent=VEHICLE; const _lf=$('#lbl-fuel'); if(_lf) _lf.textContent=FUEL; }
 boot();
 </script>
 <div id="toast" class="toast"></div>

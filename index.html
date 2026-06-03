@@ -313,6 +313,15 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .do-btns button{width:36px;height:30px;border-radius:8px;border:1px solid var(--line2);background:var(--bg);color:var(--ink);font-size:15px;line-height:1;cursor:pointer;}
 .do-btns button:disabled{opacity:.3;cursor:default;}
 .do-reset{margin-top:8px;}
+/* Changelog */
+.ver-btn{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;}
+.ver-btn:hover{color:var(--muted);}
+.log-v{padding:11px 0;border-bottom:1px solid var(--line2);}
+.log-v:last-child{border-bottom:0;}
+.log-h{font-weight:700;font-size:15px;margin-bottom:6px;color:var(--ink);}
+.log-cur{font-size:11px;font-weight:700;color:var(--teal);margin-left:8px;letter-spacing:.04em;}
+.log-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;}
+.log-list li{font-size:13.5px;color:var(--muted);line-height:1.45;}
 /* sichtbare Fokus-Ringe für Tastaturbedienung */
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
 button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visible,.icon-btn:focus-visible,.add-btn:focus-visible,.save-btn:focus-visible,.ghost:focus-visible,.scan-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:10px;}
@@ -504,7 +513,7 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
       <button class="tbtn" id="open-settings2">__GEAR__ Einstellungen</button>
     </div>
     </div>
-    <div class="footer"><span id="veh-foot"></span> · <span id="app-ver"></span></div>
+    <div class="footer"><span id="veh-foot"></span> · <button type="button" id="app-ver" class="ver-btn" title="Änderungsverlauf anzeigen"></button></div>
   </div>
 </div>
 
@@ -576,6 +585,14 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <button class="save-btn" id="svc-save">Speichern</button>
     <button class="ghost" id="svc-cancel">Abbrechen</button>
     <button class="ghost danger" id="svc-delete" style="display:none">Service löschen</button>
+  </div>
+</div>
+
+<!-- ============ CHANGELOG SHEET ============ -->
+<div id="log-overlay" class="overlay hidden">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="log-title">
+    <div class="sheet-h"><h2 id="log-title">Was ist neu</h2><button class="x" id="log-close" aria-label="Schliessen">×</button></div>
+    <div id="log-body" class="log-body"></div>
   </div>
 </div>
 
@@ -1933,9 +1950,10 @@ const _obAdd=$('#ob-add'); if(_obAdd) _obAdd.onclick=()=>openAdd();
 { const _fdel=$('#f-delete'); if(_fdel) _fdel.onclick=async()=>{ if(!editingId) return; if(await delEntry(editingId)) closeSheet($('#add-overlay')); }; }
 // Backdrop schliesst Einstellungen; ESC schliesst Sheets; Fokus-Rückgabe + Fokus-Falle (Barrierefreiheit)
 function closeSheet(el){ if(!el) return; el.classList.add('hidden'); const f=_lastFocus; _lastFocus=null; if(f && document.contains(f) && typeof f.focus==='function'){ try{ f.focus(); }catch(e){} } }
-function _openOverlayEl(){ const ids=['#confirm-overlay','#report-overlay','#svc-overlay','#add-overlay','#set-overlay']; for(const id of ids){ const el=$(id); if(el && !el.classList.contains('hidden')) return el; } return null; }
+function _openOverlayEl(){ const ids=['#confirm-overlay','#log-overlay','#report-overlay','#svc-overlay','#add-overlay','#set-overlay']; for(const id of ids){ const el=$(id); if(el && !el.classList.contains('hidden')) return el; } return null; }
 $('#set-overlay').addEventListener('click',e=>{ if(e.target===$('#set-overlay')) closeSheet($('#set-overlay')); });
 $('#report-overlay').addEventListener('click',e=>{ if(e.target===$('#report-overlay')) closeSheet($('#report-overlay')); });
+$('#log-overlay').addEventListener('click',e=>{ if(e.target===$('#log-overlay')) closeSheet($('#log-overlay')); });
 document.addEventListener('keydown',e=>{
   if(e.key==='Tab'){
     const ov=_openOverlayEl(); if(!ov) return;
@@ -1948,11 +1966,27 @@ document.addEventListener('keydown',e=>{
   }
   if(e.key!=='Escape') return;
   if(!$('#confirm-overlay').classList.contains('hidden')){ $('#confirm-no').click(); return; }
+  if(!$('#log-overlay').classList.contains('hidden')){ closeSheet($('#log-overlay')); return; }
   if(!$('#report-overlay').classList.contains('hidden')){ closeSheet($('#report-overlay')); return; }
   if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.11 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.12 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+// ---------- Änderungsverlauf / Changelog ----------
+const CHANGELOG=[
+ {v:'1.12', items:['Änderungsverlauf: Versionsnummer antippen zeigt, was neu ist']},
+ {v:'1.11', items:['Dashboard-Reihenfolge frei wählbar (Einstellungen → „Dashboard anordnen")']},
+ {v:'1.10', items:['Tank-Kalender als Jahres-Heatmap','Skeleton-Ladeanzeige beim ersten Öffnen','HEIC-Umwandlung auf iOS für die Offline-Nutzung vorgehalten']},
+ {v:'1.9', items:['Service-Historie (Ölwechsel, Reifen, MFK …)','Excel-Export','Verbrauchseinheit umschaltbar: L/100 km, km/L, mpg','Antippbare Tooltips in den Diagrammen','„Aktualisieren"-Knopf im Kopfbereich']},
+ {v:'1.8', items:['CO₂ kumulativ mit Vorjahresvergleich','Reine km-Stand-Einträge (ohne Tankung)','Hinweis zum Installieren als App','Dezentes haptisches Feedback']},
+ {v:'1.7', items:['Eigener Datumsbereich für Auswertungen','Akzentfarbe wählbar','Vergleich mit dem WLTP-/Werksverbrauch','Fahrleistung je Monat als Balken','Vorschläge beim Erfassen (Währung, Tankstelle)']},
+ {v:'1.6', items:['Notiz-Feld je Tankung','Trendlinien in den Diagrammen','Kosten je Monat als Balken','Verbrauchs- und Kostenprognose','Meilenstein-Hinweise (z. B. 50’000 km)']},
+ {v:'1.5', items:['Technische Überarbeitung – Stabilität und Barrierefreiheit']},
+ {v:'1.4', items:['Dashboard mit Kennzahlen und Zeitraum-Auswahl','Verlaufs-Diagramme für Verbrauch und Literpreis','Statistik, Auswertung und Rekorde','Tankstellen-Vergleich','Jahresreport zum Drucken','CSV-Import/-Export und JSON-Backup','Beleg-Scan per Kamera','Voll-Offline-Betrieb mit Synchronisierung']},
+];
+function renderChangelog(){ const box=$('#log-body'); if(!box) return; box.innerHTML=CHANGELOG.map((c,i)=>`<div class="log-v"><div class="log-h">Version ${c.v}${i===0?'<span class="log-cur">AKTUELL</span>':''}</div><ul class="log-list">${c.items.map(t=>`<li>${t}</li>`).join('')}</ul></div>`).join(''); }
+{ const av=$('#app-ver'); if(av) av.onclick=()=>{ renderChangelog(); const o=$('#log-overlay'); if(o){ o.classList.remove('hidden'); _lastFocus=document.activeElement; setTimeout(()=>{ const x=$('#log-close'); if(x) x.focus(); },50); } }; }
+{ const lc=$('#log-close'); if(lc) lc.onclick=()=>closeSheet($('#log-overlay')); }
 { const _vs=$('#veh-sub'); if(_vs) _vs.textContent=VEHICLE; const _vf=$('#veh-foot'); if(_vf) _vf.textContent=VEHICLE; const _lf=$('#lbl-fuel'); if(_lf) _lf.textContent=FUEL; }
 boot();
 </script>

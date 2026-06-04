@@ -15,15 +15,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="supabase.min.js"></script>
-<script defer src="qrcode.js"></script>
-<script>(function(){try{var p=localStorage.getItem('tanklog_theme')||'system';var d=(p==='dark')||(p!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<script>(function(){try{var p=localStorage.getItem('tanklog_theme')||'system';var d=(p==='dark')||(p!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.style.colorScheme=d?'dark':'light';var st=localStorage.getItem('tanklog_style')==='cockpit'?'cockpit':'werkstatt';document.documentElement.setAttribute('data-style',st);}catch(e){document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-style','werkstatt');}})();</script>
 <style>
 :root{
-  --bg:#0a0e11; --bg2:#121b20; --bg3:#18242b; --line:#213139; --line2:#2c4049;
-  --ink:#eaf3f2; --muted:#93a9ad; --faint:#83989e;
+  --bg:#15130d; --bg2:#1e1b14; --bg3:#262218; --line:#2e2a20; --line2:#3a3528;
+  --ink:#ece7db; --muted:#a89e8b; --faint:#9a907c;
   --teal:#2dd4bf; --teal-d:#0f766e; --teal-soft:rgba(45,212,191,.13);
-  --pink:#ff00aa; --pink-d:#cc0088; --pink-soft:rgba(255,0,170,.13);
-  --amber:#e3a85b; --amber-soft:rgba(227,168,91,.13);
+  --pink:#e0a05a; --pink-d:#c98a3d; --pink-soft:rgba(224,160,90,.13);
+  --amber:#e0a05a; --amber-soft:rgba(224,160,90,.13);
   --red:#f0786f;
   --sans:'Hanken Grotesk',system-ui,sans-serif;
   --serif:'Fraunces',Georgia,serif;
@@ -31,9 +30,9 @@
 }
 /* ---------- Light Mode ---------- */
 :root[data-theme="light"]{
-  --bg:#eceff1; --bg2:#ffffff; --bg3:#f2f5f6; --line:#dce3e6; --line2:#c8d2d6;
-  --ink:#13212a; --muted:#566b71; --faint:#7c8d93;
-  --pink:#cc0088; --pink-d:#a4006e; --pink-soft:rgba(204,0,136,.10);
+  --bg:#f4f1ea; --bg2:#fffdf8; --bg3:#f0ece2; --line:#e6e0d3; --line2:#d9d1c0;
+  --ink:#22262c; --muted:#585e66; --faint:#5f656d;
+  --pink:#9a5b1e; --pink-d:#7e4a18; --pink-soft:rgba(154,91,30,.10);
   --amber:#8f6310; --amber-soft:rgba(143,99,16,.13);
   --red:#cf3a30;
   --teal-soft:rgba(13,118,110,.12);
@@ -55,6 +54,19 @@
 :root[data-theme="light"] .overlay{ background:rgba(18,26,31,.42); }
 :root[data-theme="light"] .card{ box-shadow:0 24px 60px -34px rgba(20,40,50,.30); }
 :root[data-theme="light"] body{ background-image:radial-gradient(720px 460px at 108% -8%, rgba(45,212,191,.07), transparent 60%),radial-gradient(680px 520px at -12% 112%, rgba(255,0,170,.05), transparent 60%); }
+/* ---------- Cockpit-Skin (umschaltbar, dunkles Instrument) ---------- */
+:root[data-style="cockpit"]{
+  --bg:#0b0e11; --bg2:#14181c; --bg3:#1b2228; --line:#232a30; --line2:#2f3942;
+  --ink:#eef2f4; --muted:#9aa6ad; --faint:#8b959c;
+  --teal:#ffb02e; --teal-d:#c9821a; --teal-soft:rgba(255,176,46,.13);
+  --pink:#ffb02e; --pink-d:#c9821a; --pink-soft:rgba(255,176,46,.12);
+  --amber:#ffb02e; --amber-soft:rgba(255,176,46,.12); --red:#f0786f;
+  --serif:var(--mono);
+}
+:root[data-style="cockpit"] .teal,:root[data-style="cockpit"] .stat.big .val,:root[data-style="cockpit"] .chip.v,:root[data-style="cockpit"] .statcard .sv.tealv{ color:var(--teal); }
+:root[data-style="cockpit"] .sec-h h2{ text-transform:uppercase; letter-spacing:.04em; font-size:13px; }
+:root[data-style="cockpit"] #field-accent{ display:none; }
+:root[data-style="cockpit"] body{ background-image:none; }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{background:var(--bg);color:var(--ink);}
 body{
@@ -88,16 +100,16 @@ input,select{font-family:inherit;}
 .icon-btn svg{width:18px;height:18px;}
 
 /* Hero */
-.hero{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:18px 0;}
-.stat{background:linear-gradient(165deg,rgba(255,255,255,.035),rgba(255,255,255,0));background-color:var(--bg2);border:1px solid var(--line);border-radius:17px;padding:15px 16px;position:relative;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04) inset;animation:fadeUp .5s both;}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 11px;background:var(--bg2);border:1px solid var(--line);border-radius:17px;padding:11px;}
+.stat{background:var(--bg3);border:1px solid var(--line);border-radius:13px;padding:11px 12px;position:relative;overflow:hidden;animation:fadeUp .5s both;}
 .hero .stat:nth-child(1){animation-delay:.03s} .hero .stat:nth-child(2){animation-delay:.08s}
 .hero .stat:nth-child(3){animation-delay:.13s} .hero .stat:nth-child(4){animation-delay:.18s}
-.stat.big{grid-column:1/-1;background:radial-gradient(120% 140% at 0% 0%, rgba(45,212,191,.10), transparent 55%),radial-gradient(120% 140% at 100% 100%, rgba(255,0,170,.085), transparent 55%),var(--bg2);border-color:var(--line2);}
-.stat .label{margin-bottom:9px;}
-.stat .val{font-family:var(--serif);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;font-size:27px;}
-.stat .val .u{font-size:.46em;color:var(--muted);font-family:var(--sans);font-weight:600;margin-left:5px;-webkit-text-fill-color:var(--muted);}
-.stat.big .val{font-size:52px;color:var(--teal);}
-.stat .hint{font-size:11px;color:var(--faint);margin-top:6px;font-weight:500;}
+.stat.big{background:var(--teal-soft);border-color:var(--teal);}
+.stat .label{margin-bottom:7px;}
+.stat .val{font-family:var(--serif);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;font-size:24px;}
+.stat .val .u{font-size:.5em;color:var(--muted);font-family:var(--sans);font-weight:600;margin-left:4px;-webkit-text-fill-color:var(--muted);}
+.stat.big .val{font-size:30px;color:var(--teal);}
+.stat .hint{font-size:10.5px;color:var(--faint);margin-top:5px;font-weight:600;}
 .spark{position:absolute;right:0;bottom:0;opacity:.55;}
 
 /* Section heads */
@@ -112,7 +124,16 @@ input,select{font-family:inherit;}
 .add-btn svg{width:18px;height:18px;}
 
 /* Charts */
-.charts{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.vrow{display:flex;align-items:flex-end;}
+.vchart{flex:1;min-width:0;}
+.vlegend{width:78px;padding-left:12px;border-left:1px solid var(--line);margin-left:10px;}
+.vlegend .r{display:flex;justify-content:space-between;font-size:11px;margin-bottom:7px;}
+.vlegend .r:last-child{margin-bottom:0;}
+.vlegend .k{color:var(--faint);font-weight:600;}
+.vlegend .vv{font-family:var(--mono);font-weight:700;font-variant-numeric:tabular-nums;}
+.vcap{font-size:10px;color:var(--faint);margin-top:8px;font-weight:600;}
+.lp{display:flex;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line2);font-size:11px;color:var(--muted);font-weight:600;}
+.lp .mono{color:var(--ink);font-family:var(--mono);}
 .chart{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:13px 14px 10px;animation:fadeUp .5s .12s both;}
 .chart .label{margin-bottom:9px;}
 .chart svg{width:100%;height:64px;display:block;overflow:visible;}
@@ -183,6 +204,7 @@ input,select{font-family:inherit;}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .suffix{position:relative;}
 .suffix .s{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:12px;pointer-events:none;font-weight:600;}
+#lbl-fuel{margin-left:.3em;}
 .total-line{background:var(--pink-soft);border:1px solid rgba(255,0,170,.3);border-radius:13px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
 .total-line .label{color:var(--ink);}
 .total-line .tv{font-family:var(--serif);font-size:23px;font-variant-numeric:tabular-nums;color:var(--pink);}
@@ -209,8 +231,6 @@ input,select{font-family:inherit;}
 .card .lead{color:var(--muted);font-size:12.5px;margin-bottom:20px;line-height:1.55;}
 .help{font-size:11px;color:var(--faint);margin-top:8px;line-height:1.55;}
 .help a{color:var(--teal);}
-.qrbox{background:#fff;border-radius:14px;padding:14px;display:flex;justify-content:center;margin:6px 0 4px;}
-.qrbox canvas{display:block;}
 hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 
 .scan-btn{width:100%;background:var(--bg3);border:1px dashed var(--line2);color:var(--ink);border-radius:13px;padding:13px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:600;font-size:13px;margin-bottom:13px;transition:.15s;}
@@ -266,6 +286,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .barcard{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:13px 14px 10px;animation:fadeUp .5s .1s both;}
 .barcard svg{display:block;overflow:visible;width:100%;height:auto;}
 .barcard .barcap{font-size:10.5px;color:var(--faint);margin-top:7px;text-align:right;font-weight:500;}
+.grp{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:2px 0 6px;}
 .stat-empty{display:flex;align-items:center;gap:10px;color:var(--faint);padding:14px 4px;font-size:12.5px;font-weight:500;}
 .chip.note{font-style:italic;}
 /* A8 Zeitraum von–bis + G4 Crossfade (v1.7) */
@@ -294,10 +315,6 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 .svc-row{cursor:pointer;}
 .svc-row:active{opacity:.7;}
 /* A4 Tank-Kalender / Heatmap */
-#heatmap svg{width:100%;height:auto;display:block;}
-#heatmap rect[data-date]{cursor:pointer;}
-.heat-legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:8px;font-size:11px;color:var(--muted);}
-.heat-legend i{width:10px;height:10px;border-radius:2px;background:var(--teal);display:inline-block;}
 /* G5 Skeleton-Loader */
 .skel{display:none;}
 #data-view.loading > #skeleton{display:block;}
@@ -426,67 +443,45 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <section class="dash-sec" data-sec="verlauf">
     <!-- charts -->
     <div class="sec-h"><h2>Verlauf</h2><span class="ln"></span></div>
-    <div class="charts">
-      <div class="chart"><div class="label" id="chl-v">Verbrauch L/100&nbsp;km</div><svg id="chart-v" viewBox="0 0 100 40" preserveAspectRatio="none"></svg><div class="cur" id="cur-v">–</div></div>
-      <div class="chart"><div class="label">Literpreis</div><svg id="chart-p" viewBox="0 0 100 40" preserveAspectRatio="none"></svg><div class="cur" id="cur-p">–</div></div>
+      <div class="chart">
+        <div class="label" id="chl-v">Verbrauch L/100&nbsp;km</div>
+        <div class="vrow">
+          <div class="vchart"><svg id="chart-v" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div>
+          <div class="vlegend">
+            <div class="r"><span class="k">max</span><span class="vv" id="vl-max">–</span></div>
+            <div class="r"><span class="k">ø</span><span class="vv" id="vl-avg">–</span></div>
+            <div class="r"><span class="k">min</span><span class="vv" id="vl-min">–</span></div>
+          </div>
+        </div>
+        <div class="vcap" id="v-cap">L/100 km</div>
+        <div class="lp" id="lp-line">Literpreis –</div>
+        <div class="cur" id="cur-v" style="display:none">–</div>
+      </div>
+
+    </section>
+    <section class="dash-sec" data-sec="monat">
+    <!-- pro monat -->
+    <div class="sec-h"><h2>Pro Monat</h2><span class="ln"></span></div>
+    <div class="barcard">
+      <div class="grp">Kosten</div>
+      <div id="costbars"></div>
+      <div class="grp" style="margin-top:14px">Fahrleistung</div>
+      <div id="kmbars"></div>
     </div>
-
-    </section>
-    <section class="dash-sec" data-sec="kosten">
-    <!-- kosten je monat -->
-    <div class="sec-h"><h2>Kosten je Monat</h2><span class="ln"></span></div>
-    <div class="barcard" id="costbars"></div>
-
-    </section>
-    <section class="dash-sec" data-sec="fahrleistung">
-    <!-- fahrleistung je monat -->
-    <div class="sec-h"><h2>Fahrleistung je Monat</h2><span class="ln"></span></div>
-    <div class="barcard" id="kmbars"></div>
-
-    </section>
-    <section class="dash-sec" data-sec="kalender">
-    <!-- tank-kalender / heatmap (A4) -->
-    <div class="sec-h"><h2>Tank-Kalender</h2><span class="ln"></span></div>
-    <div class="barcard" id="heatcard">
-      <div id="heatmap"></div>
-      <div class="barcap" id="heat-cap">Tankaktivität – tippe einen Tag an</div>
-      <div class="heat-legend"><span>weniger</span><i style="opacity:.14"></i><i style="opacity:.35"></i><i style="opacity:.55"></i><i style="opacity:.78"></i><i style="opacity:1"></i><span>mehr</span></div>
-    </div>
-
-    </section>
-    <section class="dash-sec" data-sec="co2">
-    <!-- co2 kumulativ -->
-    <div class="sec-h"><h2>CO₂ kumulativ</h2><span class="ln"></span></div>
-    <div class="chart" id="co2card">
-      <div class="chl">Total CO₂ (geschätzt)</div>
-      <svg id="chart-co2" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
-      <div class="cur" id="cur-co2">–</div>
-      <div class="barcap" id="co2-yoy"></div>
-    </div>
-
-    </section>
-    <section class="dash-sec" data-sec="statistik">
-    <!-- statistik -->
-    <div class="sec-h"><h2>Statistik</h2><span class="ln"></span></div>
-    <div class="statcard" id="morestats"></div>
 
     </section>
     <section class="dash-sec" data-sec="auswertung">
-    <!-- auswertung -->
+    <!-- auswertung: Statistik + Rekorde + Prognose zusammengeführt -->
     <div class="sec-h"><h2>Auswertung</h2><span class="ln"></span></div>
-    <div class="statcard" id="insights"></div>
-
-    </section>
-    <section class="dash-sec" data-sec="rekorde">
-    <!-- rekorde -->
-    <div class="sec-h"><h2>Rekorde</h2><span class="ln"></span></div>
-    <div class="statcard" id="records"></div>
-
-    </section>
-    <section class="dash-sec" data-sec="prognose">
-    <!-- prognose -->
-    <div class="sec-h"><h2>Prognose</h2><span class="ln"></span></div>
-    <div class="statcard" id="forecast"></div>
+    <div class="statcard">
+      <div class="grp">Statistik</div>
+      <div id="morestats"></div>
+      <div id="insights"></div>
+      <div class="grp" style="margin-top:12px">Rekorde</div>
+      <div id="records"></div>
+      <div class="grp" style="margin-top:12px">Prognose</div>
+      <div id="forecast"></div>
+    </div>
 
     </section>
     <section class="dash-sec" data-sec="tankstellen">
@@ -498,7 +493,7 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <section class="dash-sec" data-sec="service">
     <!-- list -->
     <div class="sec-h"><h2>Service-Historie</h2><span class="ln"></span></div>
-    <div id="svc-list"></div>
+    <div id="svc-list" class="statcard"></div>
     <button class="tbtn svc-add-btn" id="svc-add">+ Service erfassen</button>
     </section>
     </div><!-- /dash-sections -->
@@ -509,7 +504,6 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
 
     <div class="toolbar">
       <button class="tbtn" id="export-csv">__DL__ CSV-Export</button>
-      <button class="tbtn" id="export-xls">__DL__ Excel-Export</button>
       <button class="tbtn" id="open-settings2">__GEAR__ Einstellungen</button>
     </div>
     </div>
@@ -607,7 +601,13 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
         <button data-theme-opt="dark">Dunkel</button>
       </div>
     </div>
-    <div class="field"><span class="label">Akzentfarbe</span>
+    <div class="field"><span class="label">Stil</span>
+      <div class="seg" id="seg-style">
+        <button data-style-opt="werkstatt" class="on">Werkstatt</button>
+        <button data-style-opt="cockpit">Cockpit</button>
+      </div>
+    </div>
+    <div class="field" id="field-accent"><span class="label">Akzentfarbe</span>
       <div class="swatches" id="seg-accent">
         <button data-accent="#2dd4bf" title="Teal" style="--sw:#2dd4bf" aria-label="Teal"></button>
         <button data-accent="#3b82f6" title="Blau" style="--sw:#3b82f6" aria-label="Blau"></button>
@@ -661,10 +661,6 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
     <p class="help" style="margin-top:8px">Backup lädt alle Tankungen als JSON-Datei herunter. Wiederherstellen liest eine solche Datei und fügt fehlende Einträge hinzu – exakte Doppel (gleicher km und Datum) werden übersprungen.</p>
     <button class="ghost" id="report-open" style="margin-top:12px">Jahresreport ansehen</button>
     <hr class="sep">
-    <span class="label">QR-Code dieser Seite</span>
-    <p class="help" style="margin-bottom:8px">Zum Ausdrucken fürs Handschuhfach – einfach scannen, um hierher zu gelangen.</p>
-    <div class="qrbox"><canvas id="qr"></canvas></div>
-    <hr class="sep">
     <button class="ghost" id="set-logout" style="margin-top:0">Abmelden</button>
     <button class="ghost" id="set-reset">Supabase-Verbindung zurücksetzen</button>
     <p class="help" id="set-info" style="margin-top:12px"></p>
@@ -710,6 +706,7 @@ const CO2_KG_PER_L=2.33;                 // Benzin, nur Verbrennung (Näherung ~
 const DAYS_PER_MONTH=30.4375;
 const PLAUS_MIN=2.5, PLAUS_MAX=25;       // plausibler Verbrauchsbereich L/100 km
 const SERVICE_KM_SOON=1500, SERVICE_KM_URGENT=300, SERVICE_DAYS_SOON=30, SERVICE_DAYS_URGENT=7;
+const FORECAST_MIN_DAYS=60;   // Jahres-Hochrechnung erst ab genügend Zeitraum (A3)
 const PHOTO_MAXDIM=1280, PHOTO_QUALITY=0.8;
 // lokales Datum als YYYY-MM-DD (kein UTC-Versatz wie bei toISOString)
 const todayLocal=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
@@ -717,6 +714,7 @@ function show(id){['screen-config','screen-auth','screen-app'].forEach(s=>$('#'+
 function msg(el,type,txt){el.innerHTML = txt?`<div class="msg ${type}">${txt}</div>`:'';}
 
 let sb=null, ENTRIES=[], loadError=false;
+let UID=null, SVC=[], REMINDER=null, svcLoadError=false;
 
 // ---------- Boot ----------
 function boot(){
@@ -769,9 +767,13 @@ $('#auth-go').onclick = async ()=>{
 // ---------- App ----------
 async function startApp(){
   show('screen-app');
-  $('#set-info').textContent = 'Angemeldet als '+((await sb.auth.getUser()).data.user?.email||'');
+  { const u=(await sb.auth.getUser()).data.user; UID=u?u.id:null; $('#set-info').textContent='Angemeldet als '+(u?.email||''); }
   try{ await flushQueue(); }catch(e){}
   await loadData();
+  try{ await svcFetch(); await reminderFetch(); }catch(e){}
+  let _svcChanged=false; try{ _svcChanged=await migrateLocalService(); }catch(e){}
+  if(_svcChanged){ try{ await svcFetch(); await reminderFetch(); }catch(e){} }
+  computeAndRender();
   maybeHandleSharedPhoto();
   maybeHandleAction();
   warmHeicCache();
@@ -807,7 +809,7 @@ async function loadData(){
   else { let c=[]; try{ c=JSON.parse(localStorage.getItem('tanklog_cache')||'[]'); }catch(e){} ENTRIES=c; }
   applyQueueToEntries();
   if(!error && ENTRIES.some(e=>e.waehrung==='EUR')){ try{ await ensureRate(); }catch(e){} }
-  if(error) toast('err', ENTRIES.length?'Offline – zeige zuletzt gespeicherte Daten.':'Konnte Daten nicht laden (offline?).');
+  if(error){ if(isAuthErr(error) && navigator.onLine){ toast('err','Anmeldung abgelaufen – bitte neu anmelden.'); } else { toast('err', ENTRIES.length?'Offline – zeige zuletzt gespeicherte Daten.':'Konnte Daten nicht laden (offline?).'); } }
   computeAndRender();
 }
 
@@ -867,36 +869,50 @@ function computeAndRender(){
   else if(curs.length>1 && !isNaN(rate)){ costCHF = curs.reduce((s,c)=>s+(c==='CHF'?byCur[c].cost:byCur[c].cost*rate),0); }
 
   const hero=$('#hero'); hero.innerHTML='';
-  // 1) Ø Verbrauch
-  const vHint = lastV ? ('zuletzt '+fmtCons(lastV._v,true)) : (pe.length ? 'keine Volltank-Strecke im Zeitraum' : 'keine Tankung in diesem Zeitraum');
-  hero.appendChild(stat('big','Ø Verbrauch', avgV!=null?nf(convCons(avgV),1):'–',consUnit(), vHint, {spark: segs.length>1?segs.map(e=>e._v):null, accent:accent()}));
-  // 2) Kosten / 100 km
-  let cphTxt='–', cphUnit='CHF', cphHint=null;
-  if(strecke>0){
-    if(costCHF!=null){ cphTxt=nf(costCHF/strecke*100,2); cphUnit='CHF'; if(curs.length>1||mainCur!=='CHF') cphHint='≈ via Kurs '+(isNaN(rate)?'–':nf(rate,3)); }
-    else if(curs.length===1){ cphTxt=nf(byCur[mainCur].cost/strecke*100,2); cphUnit=mainCur; }
-  }
-  hero.appendChild(stat('big','Kosten / 100 km', cphTxt, cphUnit, cphHint, {accent:accent()}));
-  // 3) Ausgaben (Zeitraum)
-  let costTxt='–', costUnit='', costHint=null;
-  if(curs.length===1){ costTxt=nf(byCur[mainCur].cost,2); costUnit=mainCur; }
-  else if(curs.length>1){
-    if(costCHF!=null){ costTxt=nf(costCHF,2); costUnit='CHF'; costHint='≈ gesamt · '+curs.map(c=>money(byCur[c].cost,c)).join(' · '); }
-    else { costHint=curs.map(c=>money(byCur[c].cost,c)).join(' · '); }
-  }
-  hero.appendChild(stat('','Ausgaben', costTxt, costUnit, costHint, {accent:'#ff00aa', valColor:'#ff00aa'}));
-  // 4) Strecke (Zeitraum)
+  const _pink=cssv('--pink');
+  // 1) Ø Verbrauch (hervorgehoben)
+  const _wl = wltpVal()!=null ? (' · WLTP '+nf(convCons(wltpVal()),1)) : '';
+  const vHint = (lastV ? ('zuletzt '+fmtCons(lastV._v,true)) : (pe.length ? 'keine Volltank-Strecke im Zeitraum' : 'keine Tankung in diesem Zeitraum')) + _wl;
+  hero.appendChild(stat('big','Ø Verbrauch', avgV!=null?nf(convCons(avgV),1):'–',consUnit(), vHint, {accent:accent()}));
+  // 2) Strecke (Zeitraum)
   { const peFills=pe.filter(e=>Number(e.liter)>0).length;
     hero.appendChild(stat('','Strecke', strecke?nf(strecke,0):'–','km', peFills+' Tankung'+(peFills===1?'':'en'), {accent:accent()})); }
+  // 3) Ausgaben (Zeitraum) – währungs-robust, nie nur ein Strich
+  let costTxt='–', costUnit='', costHint=null;
+  if(curs.length===1){ costTxt=nf(byCur[mainCur].cost,0); costUnit=mainCur; }
+  else if(curs.length>1){
+    if(costCHF!=null){ costTxt=nf(costCHF,0); costUnit='CHF'; costHint='≈ gesamt · '+curs.map(c=>money(byCur[c].cost,c)).join(' · '); }
+    else { const chf=(byCur['CHF']||{}).cost||0, eur=(byCur['EUR']||{}).cost||0; costTxt=nf(chf,0); costUnit='+ '+nf(eur,0)+' €'; costHint='CHF + EUR · kein Kurs gesetzt'; }
+  }
+  hero.appendChild(stat('','Ausgaben', costTxt, costUnit, costHint, {accent:_pink, valColor:_pink}));
+  // 4) Kosten / 100 km
+  let cphTxt='–', cphUnit='CHF', cphHint=null;
+  if(strecke>0){
+    if(costCHF!=null){ cphTxt=nf(costCHF/strecke*100,2); cphUnit='CHF'; if(curs.length>1||mainCur!=='CHF') cphHint='inkl. EUR zum Tageskurs'; }
+    else if(curs.length===1){ cphTxt=nf(byCur[mainCur].cost/strecke*100,2); cphUnit=mainCur; }
+    else { cphUnit=''; cphHint='Kurs fehlt'; }
+  }
+  hero.appendChild(stat('','Kosten / 100 km', cphTxt, cphUnit, cphHint, {accent:accent()}));
   if(_countUpPending){ _countUpPending=false; runCountUp(hero); }
 
-  // charts (volle Historie)
+  // Verlauf: Verbrauchschart + min/ø/max + WLTP-Linie + Literpreis-Zeile
   { const segE=asc.filter(e=>e._v!=null);
     const wRef=wltpVal()!=null?convCons(wltpVal()):null;
     const lbl=$('#chl-v'); if(lbl) lbl.innerHTML='Verbrauch '+consUnit().replace('L/100km','L/100&nbsp;km');
-    drawChart('#chart-v','#cur-v', segE.map(e=>convCons(e._v)), v=>nf(v,1)+' '+consUnit(), accent(), 3, wRef, segE.map(e=>_fmtDate(e.datum))); }
-  { const fillsE=asc.filter(e=>Number(e.liter)>0);
-    drawChart('#chart-p','#cur-p', fillsE.map(e=>Number(e.literpreis)), v=>nf(v,3), '#ff00aa', 0, null, fillsE.map(e=>_fmtDate(e.datum))); }
+    drawChart('#chart-v','#cur-v', segE.map(e=>convCons(e._v)), v=>nf(v,1)+' '+consUnit(), accent(), 3, wRef, segE.map(e=>_fmtDate(e.datum)));
+    const cv=segE.map(e=>convCons(e._v)); const setT=(id,v)=>{ const el=$(id); if(el) el.textContent=v; };
+    if(cv.length){ setT('#vl-max',nf(Math.max(...cv),1)); setT('#vl-min',nf(Math.min(...cv),1)); setT('#vl-avg',nf(cv.reduce((a,b)=>a+b,0)/cv.length,1)); }
+    else { setT('#vl-max','–'); setT('#vl-avg','–'); setT('#vl-min','–'); }
+    const cap=$('#v-cap'); if(cap){ cap.textContent=consUnit()+' · '+(cv.length?cv.length+(cv.length===1?' Wert':' Werte'):'keine Daten')+(wRef!=null?' · gestrichelt = WLTP '+nf(wRef,1):''); }
+  }
+  { const lp=asc.filter(e=>Number(e.liter)>0&&Number(e.literpreis)>0); const el=$('#lp-line');
+    if(el){
+      if(!lp.length){ el.textContent='Literpreis –'; }
+      else { const lc={}; lp.forEach(e=>lc[e.waehrung]=(lc[e.waehrung]||0)+1); const dom=Object.keys(lc).sort((a,b)=>lc[b]-lc[a])[0];
+        const ps=lp.filter(e=>e.waehrung===dom).map(e=>Number(e.literpreis)); const avg=ps.reduce((a,b)=>a+b,0)/ps.length;
+        el.innerHTML='Literpreis&nbsp; <span class="mono">ø '+nf(avg,3)+'</span> · min '+nf(Math.min(...ps),3)+' · max '+nf(Math.max(...ps),3)+' '+dom+'/L'; }
+    }
+  }
 
   renderMoreStats(asc);
   renderInsights(asc, rate);
@@ -904,8 +920,6 @@ function computeAndRender(){
   renderForecast(asc, rate);
   renderCostBars(asc, rate);
   renderKmBars(asc);
-  renderCo2(asc);
-  renderHeatmap(asc);
   renderServiceLog();
   renderStations(asc, rate);
   refreshOrtList();
@@ -972,8 +986,7 @@ function renderMoreStats(asc){
   const rows=[
     ['Letzte Tankung', lastTxt,''],
     ['Ø km / Tankfüllung', avgRange!=null?nf(avgRange,0)+' km':'–','tealv'],
-    ['Bester Verbrauch', vs.length?fmtCons(Math.min(...vs),true):'–','tealv'],
-    ['Höchster Verbrauch', vs.length?fmtCons(Math.max(...vs),true):'–','tealv'],
+    ['Bester / höchster Verbrauch', vs.length?(nf(convCons(Math.min(...vs)),1)+' / '+nf(convCons(Math.max(...vs)),1)+' '+consUnit()):'–','tealv'],
     ['Total getankt', nf(totL,1)+' L',''],
     ['Tankungen', String(fills.length),'']
   ];
@@ -1001,10 +1014,8 @@ function renderInsights(asc, rate){
   let overall=null; { let L=0,K=0; seg.forEach(e=>{ L+=e._v*e._segKm/100; K+=e._segKm; }); overall=K>0?L/K*100:null; }
   const rows=[
     ['Ø Ausgaben / Monat', avgMon!=null?('≈ '+nf(avgMon,2)+' CHF'):'–','pinkv'],
-    ['Verbrauch Sommer (Apr–Sep)', sommer!=null?fmtCons(sommer,true):'–','tealv'],
-    ['Verbrauch Winter (Okt–Mär)', winter!=null?fmtCons(winter,true):'–','tealv'],
-    ['CO₂ (geschätzt)', gkm!=null?('≈ '+nf(gkm,0)+' g/km'):'–',''],
-    ['CO₂ total (geschätzt)', '≈ '+nf(co2kg,0)+' kg','']
+    ['Sommer / Winter', (sommer!=null||winter!=null)?((sommer!=null?nf(convCons(sommer),1):'–')+' / '+(winter!=null?nf(convCons(winter),1):'–')+' '+consUnit()):'–','tealv'],
+    ['CO₂ (geschätzt)', gkm!=null?('≈ '+nf(gkm,0)+' g/km · '+nf(co2kg,0)+' kg total'):('≈ '+nf(co2kg,0)+' kg total'),'']
   ];
   const wl=wltpVal();
   if(wl){
@@ -1022,8 +1033,10 @@ function renderStations(asc, rate){
   asc.forEach(e=>{ if(Number(e.liter)<=0) return; const o=(e.ort||'').trim(); if(!o) return; const m=map[o]=map[o]||{n:0,liter:0,wsum:0,cur:{}}; m.n++; m.liter+=Number(e.liter); m.wsum+=Number(e.liter)*Number(e.literpreis); m.cur[e.waehrung]=(m.cur[e.waehrung]||0)+Number(e.liter); });
   const list=Object.keys(map).map(o=>{ const m=map[o]; const cur=Object.keys(m.cur).sort((a,b)=>m.cur[b]-m.cur[a])[0]||'CHF'; const avg=m.liter>0?m.wsum/m.liter:0; const avgCHF=cur==='CHF'?avg:(!isNaN(rate)?avg*rate:avg); return {o,n:m.n,avg,cur,avgCHF}; });
   if(!list.length){ box.innerHTML=emptyRow('Noch keine Orte erfasst')+'<p class="help" style="margin:8px 2px 0">Tippe beim Erfassen eine Tankstelle ein – dann erscheint hier ein Preisvergleich.</p>'; return; }
-  list.sort((a,b)=>a.avgCHF-b.avgCHF);
-  box.innerHTML=list.map((s,i)=>`<div class="srow"><span class="sk">${escapeHtml(s.o)}${(i===0&&list.length>1)?' · günstigste':''} <span style="color:var(--muted);font-weight:600">· ${s.n}×</span></span><span class="sv ${i===0?'tealv':''}">${nf(s.avg,3)} ${s.cur}/L</span></div>`).join('');
+  const diffCur=new Set(list.map(s=>s.cur)).size>1;
+  const canRank=!isNaN(rate) || !diffCur;   // Preisvergleich nur mit Kurs oder bei einheitlicher Währung sinnvoll
+  if(canRank) list.sort((a,b)=>a.avgCHF-b.avgCHF); else list.sort((a,b)=>b.n-a.n);   // sonst: meistbesuchte zuerst, ohne Preis-Ranking
+  box.innerHTML=list.map((s,i)=>{ const top=canRank&&i===0&&list.length>1; return `<div class="srow"><span class="sk">${escapeHtml(s.o)}${top?' · günstigste':''} <span style="color:var(--muted);font-weight:600">· ${s.n}×</span></span><span class="sv ${(canRank&&i===0)?'tealv':''}">${nf(s.avg,3)} ${s.cur}/L</span></div>`; }).join('');
 }
 
 // Bekannte Tankstellen in die Vorschlagsliste des Ort-Feldes füllen (häufigste zuerst)
@@ -1037,12 +1050,12 @@ function refreshOrtList(){
 // Service-/Wartungs-Hinweis (km-Ziel und/oder Datum), erscheint nur wenn es näher rückt
 function renderService(asc){
   const el=$('#service-note'); if(!el) return;
-  let s=null; try{ s=JSON.parse(localStorage.getItem('tanklog_service')||'null'); }catch(e){}
-  if(!s || (!s.km && !s.date) || !asc.length){ el.classList.add('hidden'); return; }
+  const s=REMINDER;
+  if(!s || (s.km==null && !s.datum) || !asc.length){ el.classList.add('hidden'); return; }
   const curKm=Math.max(...asc.map(e=>e.km_stand));
   const parts=[]; let urgent=false, overdue=false;
-  if(s.km){ const rem=s.km-curKm; if(rem<=SERVICE_KM_SOON){ if(rem<0){ overdue=true; parts.push('Service überfällig – '+nf(-rem,0)+' km drüber'); } else { if(rem<=SERVICE_KM_URGENT) urgent=true; parts.push('Service in noch '+nf(rem,0)+' km (bei '+nf(s.km,0)+')'); } } }
-  if(s.date){ const t=new Date(); t.setHours(0,0,0,0); const dd=new Date(s.date+'T00:00:00'); const days=Math.round((dd-t)/86400000); if(days<=SERVICE_DAYS_SOON){ const ds=dd.toLocaleDateString('de-CH'); if(days<0){ overdue=true; parts.push('Termin '+(-days)+' Tage überfällig ('+ds+')'); } else { if(days<=SERVICE_DAYS_URGENT) urgent=true; parts.push('Service-Termin in '+days+' Tag'+(days===1?'':'en')+' ('+ds+')'); } } }
+  if(s.km!=null){ const rem=s.km-curKm; if(rem<=SERVICE_KM_SOON){ if(rem<0){ overdue=true; parts.push('Service überfällig – '+nf(-rem,0)+' km drüber'); } else { if(rem<=SERVICE_KM_URGENT) urgent=true; parts.push('Service in noch '+nf(rem,0)+' km (bei '+nf(s.km,0)+')'); } } }
+  if(s.datum){ const t=new Date(); t.setHours(0,0,0,0); const dd=new Date(s.datum+'T00:00:00'); const days=Math.round((dd-t)/86400000); if(days<=SERVICE_DAYS_SOON){ const ds=dd.toLocaleDateString('de-CH'); if(days<0){ overdue=true; parts.push('Termin '+(-days)+' Tage überfällig ('+ds+')'); } else { if(days<=SERVICE_DAYS_URGENT) urgent=true; parts.push('Service-Termin in '+days+' Tag'+(days===1?'':'en')+' ('+ds+')'); } } }
   if(!parts.length){ el.classList.add('hidden'); return; }
   el.className='service-note'+(overdue?' overdue':(urgent?' urgent':'')); el.textContent=parts.join(' · '); el.classList.remove('hidden');
 }
@@ -1127,9 +1140,15 @@ const _fmtDate=d=>new Date((typeof d==='string'?d+'T00:00:00':d)).toLocaleDateSt
 function renderRecords(asc, rate){
   const box=$('#records'); if(!box) return;
   if(!asc.length){ box.innerHTML=emptyRow('Noch keine Daten für Rekorde'); return; }
+  const priced=asc.filter(e=>Number(e.literpreis)>0);
+  const pcurs=[...new Set(priced.map(e=>e.waehrung))];
+  // ohne Kurs nur innerhalb der häufigsten Währung vergleichen, sonst würde CHF roh mit EUR verglichen (A4)
+  let pool=priced;
+  if(isNaN(rate) && pcurs.length>1){ const dom=[...pcurs].sort((a,b)=>priced.filter(e=>e.waehrung===b).length-priced.filter(e=>e.waehrung===a).length)[0]; pool=priced.filter(e=>e.waehrung===dom); }
   const pCHF=e=>e.waehrung==='CHF'?Number(e.literpreis):(!isNaN(rate)?Number(e.literpreis)*rate:Number(e.literpreis));
-  let cheap=null,dear=null,maxL=null;
-  asc.forEach(e=>{ if(!(Number(e.literpreis)>0))return; if(!cheap||pCHF(e)<pCHF(cheap))cheap=e; if(!dear||pCHF(e)>pCHF(dear))dear=e; if(!maxL||Number(e.liter)>Number(maxL.liter))maxL=e; });
+  let cheap=null,dear=null;
+  pool.forEach(e=>{ if(!cheap||pCHF(e)<pCHF(cheap))cheap=e; if(!dear||pCHF(e)>pCHF(dear))dear=e; });
+  let maxL=null; priced.forEach(e=>{ if(!maxL||Number(e.liter)>Number(maxL.liter))maxL=e; });
   let longest=null; asc.filter(e=>e._segKm!=null).forEach(e=>{ if(!longest||e._segKm>longest._segKm)longest=e; });
   const rows=[
     ['Günstigster Literpreis', cheap?(nf(cheap.literpreis,3)+' '+cheap.waehrung+' · '+_fmtDate(cheap.datum)):'–','tealv'],
@@ -1152,7 +1171,7 @@ function renderForecast(asc, rate){
   const cs=Object.keys(byCur); let totalCHF=null;
   if(cs.length===1){ totalCHF=cs[0]==='CHF'?byCur.CHF:(!isNaN(rate)?byCur[cs[0]]*rate:null); }
   else if(cs.length>1 && !isNaN(rate)){ totalCHF=cs.reduce((s,c)=>s+(c==='CHF'?byCur[c]:byCur[c]*rate),0); }
-  const jahr = totalCHF!=null ? totalCHF/spanDays*365 : null;
+  const jahr = (totalCHF!=null && spanDays>=FORECAST_MIN_DAYS) ? totalCHF/spanDays*365 : null;
   const kmSpan = asc[asc.length-1].km_stand-asc[0].km_stand;
   const kmDay = kmSpan>0 ? kmSpan/spanDays : null;
   const fillDs = asc.filter(e=>Number(e.liter)>0).map(e=>e.datum).filter(Boolean).sort();
@@ -1167,7 +1186,7 @@ function renderForecast(asc, rate){
     nextTxt='≈ '+_fmtDate(next)+' · '+(din<=0?'überfällig':('in ~'+din+' Tag'+(din===1?'':'en')));
   }
   const rows=[
-    ['Hochrechnung Kosten / Jahr', jahr!=null?('≈ '+nf(jahr,0)+' CHF'):'–','pinkv'],
+    ['Hochrechnung Kosten / Jahr', jahr!=null?('≈ '+nf(jahr,0)+' CHF'):(spanDays<FORECAST_MIN_DAYS?'noch zu wenig Daten':'–'),'pinkv'],
     ['Ø Fahrleistung', kmDay!=null?('≈ '+nf(kmDay,0)+' km / Tag'):'–','tealv'],
     ['Nächste Tankung ca.', nextTxt,'']
   ];
@@ -1176,7 +1195,8 @@ function renderForecast(asc, rate){
 
 // ---------- Kosten je Monat (Balken, letzte 12 Monate, CHF-Äquivalent wenn möglich) ----------
 // aktuelle Akzentfarbe (F3); Standard = Teal
-function accent(){ try{ return localStorage.getItem('tanklog_accent')||'#2dd4bf'; }catch(e){ return '#2dd4bf'; } }
+function cssv(n){ try{ return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888'; }catch(e){ return '#888'; } }
+function accent(){ try{ if(document.documentElement.getAttribute('data-style')==='cockpit') return '#ffb02e'; return localStorage.getItem('tanklog_accent')||'#2dd4bf'; }catch(e){ return '#2dd4bf'; } }
 // Werksverbrauch / WLTP (L/100 km) oder null
 function wltpVal(){ const n=parseFloat(String(localStorage.getItem('tanklog_wltp')||'').replace(',','.')); return isFinite(n)&&n>0?n:null; }
 // Verbrauchseinheit (F1): intern wird immer in L/100 km gerechnet, hier nur Anzeige
@@ -1227,57 +1247,7 @@ function renderKmBars(asc){
   barsBox(box, keys, vals, accent(), (k,v)=>k+': '+nf(v,0)+' km', 'km je Monat · max '+nf(mx,0)+' km');
 }
 
-// CO₂ kumulativ (Datums-Reihenfolge) + Vorjahresvergleich (Kalenderjahr)
-function renderCo2(asc){
-  const sv=$('#chart-co2'); if(!sv) return;
-  const byDate=asc.slice().filter(e=>e.datum).sort((a,b)=> a.datum<b.datum?-1:(a.datum>b.datum?1:0));
-  let run=0; const cum=byDate.map(e=>{ run+=Number(e.liter)*CO2_KG_PER_L; return run; });
-  drawChart('#chart-co2','#cur-co2', cum, v=>nf(v,0)+' kg', accent(), 0, null, byDate.map(e=>_fmtDate(e.datum)));
-  const cap=$('#co2-yoy'); if(!cap) return;
-  const yNow=new Date().getFullYear();
-  const sumY=y=>asc.reduce((s,e)=>s+((e.datum && +e.datum.slice(0,4)===y)?Number(e.liter)*CO2_KG_PER_L:0),0);
-  const cy=sumY(yNow), py=sumY(yNow-1);
-  if(cy>0 || py>0){ let t=yNow+': ≈ '+nf(cy,0)+' kg'; if(py>0){ const d=(cy-py)/py*100; t+=' · '+(yNow-1)+': ≈ '+nf(py,0)+' kg ('+(d>=0?'+':'')+nf(d,0)+'%)'; } cap.textContent=t; }
-  else cap.textContent='Noch keine Daten';
-}
-
-// ---------- Tank-Kalender / Heatmap (A4) ----------
-function renderHeatmap(asc){
-  const box=$('#heatmap'); if(!box) return;
-  const cap=$('#heat-cap');
-  const agg={};
-  asc.forEach(e=>{ if(Number(e.liter)<=0 || !e.datum) return; const k=e.datum; const a=agg[k]=agg[k]||{l:0,t:0,cur:{}}; a.l+=Number(e.liter); a.t+=Number(e.total); a.cur[e.waehrung]=(a.cur[e.waehrung]||0)+Number(e.total); });
-  if(!Object.keys(agg).length){ box.innerHTML=emptyRow('Noch keine Tankungen'); if(cap) cap.style.display='none'; return; }
-  if(cap) cap.style.display='';
-  const MON=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-  const _iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  const today=new Date(todayLocal()+'T00:00:00');
-  const weeks=53;
-  const dow=(today.getDay()+6)%7;                 // Mo=0 … So=6
-  const start=new Date(today); start.setDate(today.getDate()-dow-(weeks-1)*7);   // Montag vor 52 Wochen
-  const maxL=Math.max(1,...Object.values(agg).map(a=>a.l));
-  const tier=l=> l<=0?0:(l>=maxL*0.75?4:(l>=maxL*0.5?3:(l>=maxL*0.25?2:1)));
-  const OP={1:.35,2:.55,3:.78,4:1};
-  const acc=accent();
-  const cell=10, gap=2, step=cell+gap, top=16, W=weeks*step, H=top+7*step;
-  let cells='', labels='', lastMon=-1;
-  const day=new Date(start);
-  for(let i=0;i<weeks*7;i++){
-    const col=Math.floor(i/7), row=i%7, k=_iso(day), x=col*step, y=top+row*step;
-    if(day<=today){
-      const a=agg[k], tg=a?tier(a.l):0;
-      const fill=tg>0?acc:'var(--line2)', op=tg>0?OP[tg]:.14;
-      const ttl=a?(k+': '+nf(a.l,1)+' L'):k;
-      cells+=`<rect data-date="${k}" x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${fill}" fill-opacity="${op}"><title>${ttl}</title></rect>`;
-    }
-    if(row===0){ const m=day.getMonth(); if(m!==lastMon){ lastMon=m; labels+=`<text x="${x}" y="11" font-size="8" fill="var(--muted)">${MON[m]}</text>`; } }
-    day.setDate(day.getDate()+1);
-  }
-  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Tank-Kalender">${labels}${cells}</svg>`;
-  box.onclick=ev=>{ const r=ev.target.closest('[data-date]'); if(!r||!cap) return; const k=r.getAttribute('data-date'); const a=agg[k];
-    if(a){ const cur=Object.keys(a.cur).sort((x,y)=>a.cur[y]-a.cur[x])[0]||'CHF'; cap.textContent=_fmtDate(k)+' · '+nf(a.l,1)+' L · '+nf(a.t,2)+' '+cur; }
-    else cap.textContent=_fmtDate(k)+' · keine Tankung'; };
-}
+// (CO₂-Karte und Tank-Kalender entfernt – CO₂ steht als Zeile in der Auswertung)
 let _countUpPending=true;
 function runCountUp(box){
   if(!box) return;
@@ -1373,6 +1343,7 @@ $('#f-save').onclick=async()=>{
   if(warnings.length && !savePending){ msg($('#add-msg'),'err','\u26A0 '+warnings.join(' ')+' \u2013 nochmals tippen zum Speichern.'); savePending=true; $('#f-save').textContent='Trotzdem speichern'; return; }
   const total=isNaN(v.total)?+(v.liter*v.preis).toFixed(2):v.total;
   const obj={datum:v.datum,km_stand:v.km,liter:v.liter,literpreis:v.preis,total,waehrung:v.cur,vollgetankt:v.voll,ort:v.ort,notiz:v.notiz};
+  if(!editingId) obj.id=newRowId();   // stabile ID: Online-Insert und ein evtl. nachgelagerter Offline-Sync nutzen dieselbe ID
   // Bearbeitung einer noch nicht synchronisierten Offline-Neuanlage: nie zum Server, nur die Queue anpassen
   if(editingId && isPendingId(editingId)){
     queueUpdate(editingId, obj); savePending=false;
@@ -1413,17 +1384,16 @@ async function delEntry(id){
 function openSet(){
   $('#set-rate').value = localStorage.getItem(RATE_KEY)||'';
   { const er=effectiveRate(); $('#set-rate').placeholder = (er&&er.src==='auto')?('automatisch: '+nf(er.rate,3)+(er.date?(' · '+er.date.split('-').reverse().join('.')):'')):'automatisch (leer lassen)'; }
-  { let sv=null; try{ sv=JSON.parse(localStorage.getItem('tanklog_service')||'null'); }catch(e){} $('#set-service-km').value=(sv&&sv.km)?sv.km:''; $('#set-service-date').value=(sv&&sv.date)?sv.date:''; }
+  { const sv=REMINDER; $('#set-service-km').value=(sv&&sv.km!=null)?sv.km:''; $('#set-service-date').value=(sv&&sv.datum)?sv.datum:''; }
   { const wv=localStorage.getItem('tanklog_wltp'); const w=$('#set-wltp'); if(w) w.value=wv||''; }
   $('#set-overlay').classList.remove('hidden');
   _lastFocus=document.activeElement; setTimeout(()=>{ const c=$('#set-close'); if(c) c.focus(); },60);
-  drawQR($('#qr'), location.href);
 }
 $('#open-settings').onclick=$('#open-settings2').onclick=openSet;
 { const rb=$('#refresh-btn'); if(rb) rb.onclick=async()=>{ if(rb.classList.contains('spinning')) return; rb.classList.add('spinning'); try{ await loadData(); haptic(8); toast('ok','Aktualisiert.'); }catch(e){} rb.classList.remove('spinning'); }; }
 $('#set-close').onclick=()=>closeSheet($('#set-overlay'));
 $('#set-rate-save').onclick=async ()=>{ const raw=$('#set-rate').value.trim(); const rn=pnum(raw); if(raw && !isNaN(rn)) localStorage.setItem(RATE_KEY,String(rn)); else localStorage.removeItem(RATE_KEY); closeSheet($('#set-overlay')); try{ await ensureRate(); }catch(e){} computeAndRender(); };
-$('#set-service-save').onclick=()=>{ const kmRaw=$('#set-service-km').value.trim(); const km=Math.round(pnum(kmRaw)); const date=$('#set-service-date').value||null; const obj={ km:(kmRaw&&!isNaN(km)&&km>0)?km:null, date:date }; if(!obj.km && !obj.date) localStorage.removeItem('tanklog_service'); else localStorage.setItem('tanklog_service', JSON.stringify(obj)); closeSheet($('#set-overlay')); toast('ok','Service-Ziel gespeichert.'); computeAndRender(); };
+$('#set-service-save').onclick=async()=>{ const kmRaw=$('#set-service-km').value.trim(); const km=Math.round(pnum(kmRaw)); const date=$('#set-service-date').value||null; const kmVal=(kmRaw&&!isNaN(km)&&km>0)?km:null; if(!navigator.onLine){ toast('err','Offline – Service-Ziel kann gerade nicht gespeichert werden.'); return; } const btn=$('#set-service-save'); btn.disabled=true; try{ if(!kmVal && !date){ const {error}=await sb.from('service_reminder').delete().eq('user_id',UID); if(error) throw error; REMINDER=null; } else { const {error}=await sb.from('service_reminder').upsert({user_id:UID, km:kmVal, datum:date, updated_at:new Date().toISOString()}); if(error) throw error; REMINDER={km:kmVal, datum:date}; } try{ localStorage.setItem('tanklog_remcache', JSON.stringify(REMINDER)); }catch(e){} closeSheet($('#set-overlay')); toast('ok','Service-Ziel gespeichert.'); computeAndRender(); }catch(err){ toast('err', err.message||'Speichern fehlgeschlagen.'); } finally{ btn.disabled=false; } };
 $('#set-wltp-save').onclick=()=>{ const raw=$('#set-wltp').value.trim(); const n=pnum(raw); if(raw && !isNaN(n) && n>0) localStorage.setItem('tanklog_wltp', String(n)); else localStorage.removeItem('tanklog_wltp'); closeSheet($('#set-overlay')); toast('ok','Werksverbrauch gespeichert.'); computeAndRender(); };
 $('#set-logout').onclick=async()=>{ if(!await askConfirm('Wirklich abmelden?','Abmelden')) return; await sb.auth.signOut(); $('#set-overlay').classList.add('hidden'); show('screen-auth'); };
 $('#set-reset').onclick=resetCfg;
@@ -1455,6 +1425,14 @@ function applyAccent(){
 }
 { const _sa=$('#seg-accent'); if(_sa) _sa.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_accent', b.dataset.accent); applyAccent(); if(!$('#screen-app').classList.contains('hidden')) computeAndRender(); }; }
 applyAccent();
+function applyStyle(){
+  const s=(localStorage.getItem('tanklog_style')==='cockpit')?'cockpit':'werkstatt';
+  document.documentElement.setAttribute('data-style', s);
+  const seg=$('#seg-style'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.styleOpt===s));
+  applyAccent();
+}
+{ const _ss=$('#seg-style'); if(_ss) _ss.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_style', b.dataset.styleOpt); applyStyle(); if(!$('#screen-app').classList.contains('hidden')) computeAndRender(); }; }
+applyStyle();
 
 // ---------- Verbrauchseinheit (F1) ----------
 function applyUnitSeg(){ const seg=$('#seg-unit'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.unit===consMode())); }
@@ -1462,8 +1440,8 @@ function applyUnitSeg(){ const seg=$('#seg-unit'); if(seg) seg.querySelectorAll(
 applyUnitSeg();
 
 // ---------- Dashboard-Reihenfolge (F4) ----------
-const DASH_DEF=['verlauf','kosten','fahrleistung','kalender','co2','statistik','auswertung','rekorde','prognose','tankstellen','service'];
-const DASH_LBL={verlauf:'Verlauf',kosten:'Kosten je Monat',fahrleistung:'Fahrleistung je Monat',kalender:'Tank-Kalender',co2:'CO₂ kumulativ',statistik:'Statistik',auswertung:'Auswertung',rekorde:'Rekorde',prognose:'Prognose',tankstellen:'Tankstellen',service:'Service-Historie'};
+const DASH_DEF=['verlauf','monat','auswertung','tankstellen','service'];
+const DASH_LBL={verlauf:'Verlauf',monat:'Pro Monat',auswertung:'Auswertung',tankstellen:'Tankstellen',service:'Service-Historie'};
 function dashOrder(){ let a=[]; try{ a=JSON.parse(localStorage.getItem('tanklog_dashorder')||'[]')||[]; }catch(e){} a=a.filter(k=>DASH_DEF.indexOf(k)>=0); DASH_DEF.forEach(k=>{ if(a.indexOf(k)<0) a.push(k); }); return a; }
 function saveDashOrder(a){ try{ localStorage.setItem('tanklog_dashorder', JSON.stringify(a)); }catch(e){} }
 function applyDashOrder(){ const box=$('#dash-sections'); if(!box) return; dashOrder().forEach(k=>{ const el=box.querySelector('.dash-sec[data-sec="'+k+'"]'); if(el) box.appendChild(el); }); }
@@ -1506,38 +1484,64 @@ $('#export-csv').onclick=()=>{
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='tank-log_megane_'+todayLocal()+'.csv'; a.click();
 };
-$('#export-xls').onclick=()=>{
-  if(!ENTRIES.length){ toast('err','Keine Daten zum Export.'); return; }
-  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const heads=['Datum','KM-Stand','Tankmenge (L)','Literpreis','Total','Währung','Vollgetankt','Ort','Notiz'];
-  const cS=v=>`<Cell><Data ss:Type="String">${esc(v==null?'':v)}</Data></Cell>`;
-  const cN=v=>`<Cell><Data ss:Type="Number">${Number(v)||0}</Data></Cell>`;
-  const hdr='<Row>'+heads.map(h=>`<Cell ss:StyleID="hdr"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('')+'</Row>';
-  const body=ENTRIES.map(e=>'<Row>'+cS(e.datum)+cN(e.km_stand)+cN(e.liter)+cN(e.literpreis)+cN(e.total)+cS(e.waehrung)+cS(e.vollgetankt?'ja':'nein')+cS(e.ort||'')+cS(e.notiz||'')+'</Row>').join('');
-  const xml='<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n'
-    +'<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
-    +'<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/></Style></Styles>'
-    +'<Worksheet ss:Name="Tankungen"><Table>'+hdr+body+'</Table></Worksheet></Workbook>';
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel'}));
-  a.download='tank-log_megane_'+todayLocal()+'.xls'; a.click();
-  toast('ok', ENTRIES.length+' Tankungen als Excel-Datei exportiert.');
-};
-
-// ---------- Service-Historie (B4, lokal gespeichert) ----------
-function svcLoad(){ try{ return JSON.parse(localStorage.getItem('tanklog_servicelog')||'[]')||[]; }catch(e){ return []; } }
-function svcSave(arr){ try{ localStorage.setItem('tanklog_servicelog', JSON.stringify(arr)); }catch(e){} }
+// ---------- Service-Historie (in Supabase, lokaler Cache nur für Offline-Anzeige) ----------
+async function svcFetch(){
+  let error=null,data=null;
+  try{ const r=await sb.from('service').select('*').order('datum',{ascending:false}); error=r.error; data=r.data; }catch(e){ error=e; }
+  svcLoadError=!!error;
+  if(!error && data){ SVC=data; try{ localStorage.setItem('tanklog_svccache', JSON.stringify(data)); }catch(e){} }
+  else { let c=[]; try{ c=JSON.parse(localStorage.getItem('tanklog_svccache')||'[]'); }catch(e){} SVC=c; }
+}
+async function reminderFetch(){
+  let error=null,row=null;
+  try{ const r=await sb.from('service_reminder').select('*').limit(1); error=r.error; row=(r.data&&r.data[0])||null; }catch(e){ error=e; }
+  if(!error){ REMINDER=(row && (row.km!=null||row.datum!=null))?{km:row.km, datum:row.datum}:null; try{ localStorage.setItem('tanklog_remcache', JSON.stringify(REMINDER)); }catch(e){} }
+  else { try{ REMINDER=JSON.parse(localStorage.getItem('tanklog_remcache')||'null'); }catch(e){ REMINDER=null; } }
+}
+// Einmalige Migration früherer localStorage-Daten in die DB (idempotent; lokale Kopie bleibt als …_legacy erhalten)
+async function migrateLocalService(){
+  if(!navigator.onLine || !UID) return false;
+  let changed=false;
+  let legacy=[]; try{ legacy=JSON.parse(localStorage.getItem('tanklog_servicelog')||'[]')||[]; }catch(e){}
+  if(legacy.length){
+    const seen=new Set(SVC.map(s=>String(s.datum)+'|'+(s.art||'Service')+'|'+(s.km==null?'':s.km)));
+    const rows=[];
+    legacy.forEach(s=>{
+      if(!s||!s.datum||!/^\d{4}-\d{2}-\d{2}$/.test(String(s.datum))) return;
+      const km=(s.km!=null&&!isNaN(Number(s.km)))?Math.round(Number(s.km)):null;
+      const key=String(s.datum)+'|'+(s.art||'Service')+'|'+(km==null?'':km);
+      if(seen.has(key)) return; seen.add(key);
+      const kosten=(s.kosten!=null&&!isNaN(Number(s.kosten)))?+Number(s.kosten).toFixed(2):null;
+      rows.push({datum:String(s.datum), km, art:String(s.art||'Service'), kosten, waehrung:(String(s.waehrung||'').toUpperCase().indexOf('EUR')>=0?'EUR':'CHF'), notiz:(s.notiz?String(s.notiz):null)});
+    });
+    if(rows.length){ const {error}=await sb.from('service').insert(rows); if(error) throw error; changed=true; }
+    localStorage.setItem('tanklog_servicelog_legacy', localStorage.getItem('tanklog_servicelog')||'[]');
+    localStorage.removeItem('tanklog_servicelog');
+  }
+  let rem=null; try{ rem=JSON.parse(localStorage.getItem('tanklog_service')||'null'); }catch(e){}
+  if(rem && (rem.km!=null||rem.date!=null||rem.datum!=null)){
+    if(!REMINDER){
+      const kmv=(rem.km!=null&&!isNaN(Number(rem.km)))?Math.round(Number(rem.km)):null;
+      const dt=rem.datum||rem.date||null;
+      const {error}=await sb.from('service_reminder').upsert({user_id:UID, km:kmv, datum:dt, updated_at:new Date().toISOString()}); if(error) throw error; changed=true;
+    }
+    localStorage.setItem('tanklog_service_legacy', localStorage.getItem('tanklog_service')||'null');
+    localStorage.removeItem('tanklog_service');
+  }
+  return changed;
+}
 let svcEditId=null, svcCur='CHF';
 function renderServiceLog(){
   const box=$('#svc-list'); if(!box) return;
-  const arr=svcLoad().slice().sort((a,b)=> (String(a.datum)<String(b.datum)?1:(String(a.datum)>String(b.datum)?-1:0)));
-  if(!arr.length){ box.innerHTML=emptyRow('Noch keine Service-Einträge'); return; }
+  const arr=SVC.slice().sort((a,b)=> (String(a.datum)<String(b.datum)?1:(String(a.datum)>String(b.datum)?-1:0)));
+  if(!arr.length){ box.innerHTML=emptyRow(svcLoadError?'Service offline nicht verfügbar':'Noch keine Service-Einträge'); return; }
   box.innerHTML=arr.map(s=>{
     const d=s.datum?_fmtDate(s.datum):'–';
     const k=(s.km!=null&&!isNaN(Number(s.km)))?(nf(Number(s.km),0)+' km'):'';
     const c=(s.kosten!=null&&!isNaN(Number(s.kosten))&&Number(s.kosten)>0)?((k?' · ':'')+nf(Number(s.kosten),2)+' '+(s.waehrung||'CHF')):'';
     return `<div class="srow svc-row" data-id="${escapeHtml(String(s.id))}"><span class="sk">${escapeHtml(s.art||'Service')} <span style="color:var(--muted);font-weight:600">· ${d}</span></span><span class="sv">${k}${c}</span></div>`;
   }).join('');
-  box.querySelectorAll('.svc-row').forEach(r=>{ r.onclick=()=>{ const e=svcLoad().find(x=>String(x.id)===String(r.dataset.id)); if(e) openSvc(e); }; });
+  box.querySelectorAll('.svc-row').forEach(r=>{ r.onclick=()=>{ const e=SVC.find(x=>String(x.id)===String(r.dataset.id)); if(e) openSvc(e); }; });
 }
 function openSvc(e){
   svcEditId=e?e.id:null;
@@ -1557,19 +1561,39 @@ function openSvc(e){
 $('#svc-add').onclick=()=>openSvc(null);
 $('#svc-close').onclick=$('#svc-cancel').onclick=()=>closeSheet($('#svc-overlay'));
 $('#svc-seg-cur').onclick=e=>{ const b=e.target.closest('button'); if(!b)return; svcCur=b.dataset.cur; setSeg('#svc-seg-cur','data-cur',svcCur); $('#svc-cur').textContent=svcCur; };
-$('#svc-save').onclick=()=>{
+$('#svc-save').onclick=async()=>{
   const datum=$('#svc-datum').value; if(!datum){ msg($('#svc-msg'),'err','Datum fehlt.'); return; }
+  if(!navigator.onLine){ msg($('#svc-msg'),'err','Offline – Service kann gerade nicht gespeichert werden.'); return; }
   const km=Math.round(pnum($('#svc-km').value)); const kosten=pnum($('#svc-kosten').value);
-  const obj={ id: svcEditId||('s'+Date.now()), datum, km:isNaN(km)?null:km, art:$('#svc-art').value||'Service', kosten:isNaN(kosten)?null:+kosten.toFixed(2), waehrung:svcCur, notiz:$('#svc-notiz').value.trim()||null };
-  let arr=svcLoad();
-  if(svcEditId) arr=arr.map(x=>String(x.id)===String(svcEditId)?obj:x); else arr.push(obj);
-  svcSave(arr); closeSheet($('#svc-overlay')); haptic(12); toast('ok','Service gespeichert.'); renderServiceLog();
+  const rec={ datum, km:isNaN(km)?null:km, art:$('#svc-art').value||'Service', kosten:isNaN(kosten)?null:+kosten.toFixed(2), waehrung:svcCur, notiz:$('#svc-notiz').value.trim()||null };
+  const btn=$('#svc-save'); btn.disabled=true;
+  try{
+    if(svcEditId){ const {error}=await sb.from('service').update(rec).eq('id',svcEditId); if(error) throw error; }
+    else { const {error}=await sb.from('service').insert(rec); if(error) throw error; }
+    await svcFetch(); closeSheet($('#svc-overlay')); haptic(12); toast('ok','Service gespeichert.'); renderServiceLog();
+  }catch(err){ msg($('#svc-msg'),'err', err.message||'Speichern fehlgeschlagen.'); }
+  finally{ btn.disabled=false; }
 };
 $('#svc-delete').onclick=async()=>{
   if(!svcEditId) return;
+  if(!navigator.onLine){ msg($('#svc-msg'),'err','Offline – Löschen gerade nicht möglich.'); return; }
   if(!await askConfirm('Diesen Service-Eintrag löschen?','Löschen')) return;
-  svcSave(svcLoad().filter(x=>String(x.id)!==String(svcEditId))); closeSheet($('#svc-overlay')); haptic(18); toast('ok','Service gelöscht.'); renderServiceLog();
+  try{ const {error}=await sb.from('service').delete().eq('id',svcEditId); if(error) throw error; await svcFetch(); closeSheet($('#svc-overlay')); haptic(18); toast('ok','Service gelöscht.'); renderServiceLog(); }
+  catch(err){ msg($('#svc-msg'),'err', err.message||'Löschen fehlgeschlagen.'); }
 };
+function normRestoreService(arr){
+  const out=[]; const seen=new Set(SVC.map(s=>String(s.datum)+'|'+(s.art||'Service')+'|'+(s.km==null?'':s.km)));
+  (arr||[]).forEach(o=>{
+    if(!o||typeof o!=='object'||!o.datum||!/^\d{4}-\d{2}-\d{2}$/.test(String(o.datum))) return;
+    const km=(o.km!=null&&!isNaN(parseInt(o.km)))?parseInt(o.km):null;
+    const art=String(o.art||'Service');
+    const key=String(o.datum)+'|'+art+'|'+(km==null?'':km);
+    if(seen.has(key)) return; seen.add(key);
+    const kosten=(o.kosten!=null&&!isNaN(Number(o.kosten)))?+Number(o.kosten).toFixed(2):null;
+    out.push({datum:String(o.datum), km, art, kosten, waehrung:(String(o.waehrung||'').toUpperCase().indexOf('EUR')>=0?'EUR':'CHF'), notiz:(o.notiz?String(o.notiz):null)});
+  });
+  return out;
+}
 
 
 // ---------- Foto-Scan (Claude Vision, direkt im Browser) ----------
@@ -1695,7 +1719,10 @@ function openEdit(e){
 
 // Offline-Warteschlange (Operations-Log: add / update / delete)
 function isPendingId(id){ return String(id).indexOf('pending')===0; }
+function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);}); }
+function newRowId(){ try{ if(typeof crypto!=='undefined' && crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return uuidv4(); }
 function isOfflineErr(err){ return !navigator.onLine || /fetch|network|failed|load failed|timeout|connection/i.test((err&&err.message)||''); }
+function isAuthErr(err){ if(!err) return false; const m=String(err.message||'').toLowerCase(); const c=String(err.code||''); const s=err.status||err.statusCode||0; return s===401 || c==='PGRST301' || c==='PGRST302' || /jwt|unauthorized|not authenticated|auth session|invalid (?:claim|signature)|token (?:expired|invalid)|session expired/.test(m); }
 function loadQueue(){
   try{
     const arr=JSON.parse(localStorage.getItem('tanklog_queue')||'[]');
@@ -1705,11 +1732,12 @@ function loadQueue(){
 }
 function saveQueue(q){ localStorage.setItem('tanklog_queue', JSON.stringify(q)); }
 function pendingOpFor(id){ const o=loadQueue().find(x=>String(x.id)===String(id)); return o?o.op:null; }
-function queueAdd(obj){ const q=loadQueue(); const id='pending-'+Date.now()+'-'+Math.floor(Math.random()*1000); q.push({op:'add',id,obj}); saveQueue(q); return id; }
+function queueAdd(obj){ const q=loadQueue(); const id='pending-'+Date.now()+'-'+Math.floor(Math.random()*1000); if(!obj.id) obj=Object.assign({},obj,{id:newRowId()}); q.push({op:'add',id,obj}); saveQueue(q); return id; }
 function queueUpdate(id,obj){
   const q=loadQueue();
-  if(isPendingId(id)){ // Bearbeitung einer noch nicht synchronisierten Neuanlage -> Add direkt anpassen
-    const a=q.find(o=>o.op==='add'&&String(o.id)===String(id)); if(a){ a.obj=obj; } else { q.push({op:'add',id,obj}); }
+  if(isPendingId(id)){ // Bearbeitung einer noch nicht synchronisierten Neuanlage -> Add direkt anpassen, rowId bewahren
+    const a=q.find(o=>o.op==='add'&&String(o.id)===String(id)); const rid=(a&&a.obj&&a.obj.id)||newRowId();
+    if(a){ a.obj=Object.assign({},obj,{id:rid}); } else { q.push({op:'add',id,obj:Object.assign({},obj,{id:rid})}); }
   } else {
     const u=q.find(o=>o.op==='update'&&String(o.id)===String(id)); if(u){ u.obj=obj; } else { q.push({op:'update',id,obj}); }
   }
@@ -1737,16 +1765,25 @@ async function discardPending(id){
   if(op==='add'){ ENTRIES=ENTRIES.filter(x=>String(x.id)!==String(id)); computeAndRender(); toast('ok','Offline-Eintrag verworfen.'); }
   else { await loadData(); toast('ok','Änderung verworfen.'); }
 }
+let _flushing=false;
+function isDupErr(e){ return !!e && (e.code==='23505' || /duplicate key|already exists/i.test(String((e&&e.message)||(e&&e.details)||''))); }
 async function flushQueue(){
-  let q=loadQueue(); if(!q.length||!sb) return; const rest=[];
-  for(const it of q){
-    try{
-      if(it.op==='add'){ const {error}=await sb.from('tankungen').insert(it.obj); if(error) throw error; }
-      else if(it.op==='update'){ const {error}=await sb.from('tankungen').update(it.obj).eq('id',it.id); if(error) throw error; }
-      else if(it.op==='delete'){ const {error}=await sb.from('tankungen').delete().eq('id',it.id); if(error) throw error; }
-    }catch(e){ rest.push(it); }
-  }
-  saveQueue(rest);
+  if(_flushing || !sb) return;
+  const q=loadQueue(); if(!q.length) return;
+  _flushing=true;
+  try{
+    const done=new Set();
+    for(const it of q){
+      try{
+        if(it.op==='add'){ const {error}=await sb.from('tankungen').insert(it.obj); if(error && !isDupErr(error)) throw error; }   // erneuter Sync derselben ID -> Duplikat ignorieren (idempotent)
+        else if(it.op==='update'){ const {error}=await sb.from('tankungen').update(it.obj).eq('id',it.id); if(error) throw error; }
+        else if(it.op==='delete'){ const {error}=await sb.from('tankungen').delete().eq('id',it.id); if(error) throw error; }
+        done.add(it.op+'\u0001'+it.id);
+      }catch(e){ /* bleibt in der Queue, nächster Versuch später */ }
+    }
+    // nur erfolgreich verarbeitete Items aus der AKTUELLEN Queue entfernen (während des Sync neu Hinzugekommenes bleibt erhalten)
+    saveQueue(loadQueue().filter(it=> !done.has(it.op+'\u0001'+it.id)));
+  } finally { _flushing=false; }
 }
 window.addEventListener('online', ()=>{ if(sb){ flushQueue().then(()=>loadData()); } });
 
@@ -1805,13 +1842,15 @@ $('#imp-file').onchange=async(e)=>{
 
 // ---------- Backup / Wiederherstellen (JSON) ----------
 $('#backup-btn').onclick=()=>{
-  if(!ENTRIES.length){ toast('err','Keine Daten für ein Backup.'); return; }
+  if(!ENTRIES.length && !SVC.length){ toast('err','Keine Daten für ein Backup.'); return; }
   const keys=['datum','km_stand','liter','literpreis','total','waehrung','vollgetankt','ort','notiz'];
   const entries=ENTRIES.map(e=>{ const o={}; keys.forEach(k=>o[k]=(e[k]!==undefined?e[k]:null)); return o; });
-  const data={app:'Tank-Log', version:1, exported:new Date().toISOString(), count:entries.length, entries};
+  const svcKeys=['datum','km','art','kosten','waehrung','notiz'];
+  const service=SVC.map(s=>{ const o={}; svcKeys.forEach(k=>o[k]=(s[k]!==undefined?s[k]:null)); return o; });
+  const data={app:'Tank-Log', version:2, exported:new Date().toISOString(), count:entries.length, entries, service, reminder:REMINDER};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download='tank-log_backup_'+todayLocal()+'.json'; a.click();
-  toast('ok', entries.length+' Tankungen als Backup gespeichert.');
+  toast('ok', entries.length+' Tankungen + '+service.length+' Service-Einträge gesichert.');
 };
 function normRestore(arr){
   const out=[]; let skipped=0; const seen=new Set(ENTRIES.map(e=>e.km_stand+'|'+e.datum));
@@ -1838,13 +1877,21 @@ $('#restore-file').onchange=async(e)=>{
   try{
     const text=await file.text(); let j; try{ j=JSON.parse(text); }catch(_){ toast('err','Datei ist kein gültiges JSON.'); return; }
     const arr=Array.isArray(j)?j:(j&&Array.isArray(j.entries)?j.entries:null);
-    if(!arr){ toast('err','Kein Backup erkannt (erwartet Liste oder {entries:[…]}).'); return; }
-    const {rows,skipped}=normRestore(arr);
-    if(!rows.length){ toast('err','Keine neuen Einträge ('+skipped+' übersprungen / Duplikate).'); return; }
-    if(!await askConfirm(rows.length+(rows.length===1?' Eintrag':' Einträge')+' wiederherstellen'+(skipped?(' ('+skipped+' übersprungen / Duplikate)'):'')+'?','Wiederherstellen')) return;
-    const {error}=await sb.from('tankungen').insert(rows); if(error) throw error;
-    toast('ok', rows.length+' wiederhergestellt'+(skipped?(', '+skipped+' übersprungen'):'')+'.');
-    await loadData();
+    const svcArr=(j&&Array.isArray(j.service))?j.service:[];
+    if(!arr && !svcArr.length){ toast('err','Kein Backup erkannt (erwartet Liste oder {entries:[…]}).'); return; }
+    const {rows,skipped}=arr?normRestore(arr):{rows:[],skipped:0};
+    const svcRows=normRestoreService(svcArr);
+    const rem=(j&&j.reminder&&(j.reminder.km!=null||j.reminder.datum!=null||j.reminder.date!=null))?j.reminder:null;
+    const remNew=!!(rem && !REMINDER);
+    if(!rows.length && !svcRows.length && !remNew){ toast('err','Keine neuen Einträge ('+skipped+' übersprungen / Duplikate).'); return; }
+    if(!navigator.onLine){ toast('err','Offline – Wiederherstellung gerade nicht möglich.'); return; }
+    const desc=[]; if(rows.length) desc.push(rows.length+(rows.length===1?' Tankung':' Tankungen')); if(svcRows.length) desc.push(svcRows.length+' Service'); if(remNew) desc.push('Service-Ziel');
+    if(!await askConfirm(desc.join(' + ')+' wiederherstellen'+(skipped?(' ('+skipped+' übersprungen / Duplikate)'):'')+'?','Wiederherstellen')) return;
+    if(rows.length){ const {error}=await sb.from('tankungen').insert(rows); if(error) throw error; }
+    if(svcRows.length){ const {error}=await sb.from('service').insert(svcRows); if(error) throw error; }
+    if(remNew){ const kmv=(rem.km!=null&&!isNaN(Number(rem.km)))?Math.round(Number(rem.km)):null; const dt=rem.datum||rem.date||null; const {error}=await sb.from('service_reminder').upsert({user_id:UID, km:kmv, datum:dt, updated_at:new Date().toISOString()}); if(error) throw error; }
+    toast('ok','Wiederhergestellt'+(skipped?(', '+skipped+' übersprungen'):'')+'.');
+    await loadData(); try{ await svcFetch(); await reminderFetch(); }catch(_){} computeAndRender();
   }catch(err){ toast('err', err.message||'Wiederherstellung fehlgeschlagen.'); }
 };
 
@@ -1914,20 +1961,6 @@ function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){}
 function askConfirm(text,yes){ return new Promise(res=>{ const ov=$('#confirm-overlay'); $('#confirm-msg').textContent=text; $('#confirm-yes').textContent=yes||'OK'; ov.classList.remove('hidden'); setTimeout(()=>{ const n=$('#confirm-no'); if(n) n.focus(); },50); const done=v=>{ ov.classList.add('hidden'); res(v); }; $('#confirm-yes').onclick=()=>done(true); $('#confirm-no').onclick=()=>done(false); }); }
 function debounce(fn,ms){ let t; return function(){ const a=arguments, c=this; clearTimeout(t); t=setTimeout(()=>fn.apply(c,a),ms); }; }
 (function(){ const ls=$('#list-search'); if(ls){ const run=debounce(()=>renderList(ls.value),150); ls.oninput=run; } })();
-// QR-Code lokal auf Canvas zeichnen (kleiner eigenständiger Generator, offline-fähig)
-function drawQR(canvas,text){
-  if(!canvas || typeof qrcode!=='function') return false;
-  try{
-    const qr=qrcode(0,'M'); qr.addData(text); qr.make();
-    const n=qr.getModuleCount(), quiet=4, target=180, total=n+quiet*2;
-    const scale=Math.max(2, Math.floor(target/total)), px=total*scale, dpr=window.devicePixelRatio||1;
-    canvas.width=px*dpr; canvas.height=px*dpr; canvas.style.width=px+'px'; canvas.style.height=px+'px';
-    const ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,px,px); ctx.fillStyle='#0b1012';
-    for(let r=0;r<n;r++) for(let c=0;c<n;c++){ if(qr.isDark(r,c)) ctx.fillRect((c+quiet)*scale,(r+quiet)*scale,scale,scale); }
-    return true;
-  }catch(e){ return false; }
-}
 // HEIC-Umwandlung: lokal gebündelt, nur bei Bedarf geladen (Foto-Scan braucht ohnehin Netz)
 function ensureHeic(){ return new Promise((res,rej)=>{ if(window.heic2any) return res(); const sc=document.createElement('script'); sc.src='heic2any.min.js'; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('HEIC-Umwandlung nicht verfügbar.')); document.head.appendChild(sc); }); }
 // D3: heic2any auf iOS (dort sind Fotos HEIC) im Leerlauf vorab in den Cache holen –
@@ -1971,9 +2004,19 @@ document.addEventListener('keydown',e=>{
   if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.12 · 2026-06-02'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.22 · 2026-06-04'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 // ---------- Änderungsverlauf / Changelog ----------
 const CHANGELOG=[
+ {v:'1.22', items:['Neuer umschaltbarer Stil „Cockpit“ (dunkles Instrument) – Wechsel in den Einstellungen','Aufgeräumt: QR-Code und Excel-Export entfernt; der CSV-Export bleibt']},
+ {v:'1.21', items:['Übersichtlicher: Statistik, Rekorde und Prognose stehen jetzt zusammen im Block „Auswertung“; CO₂ als Zeile','Tank-Kalender (Heatmap) und die separate CO₂-Grafik entfernt']},
+ {v:'1.20', items:['Monatswerte zusammengefasst: „Kosten“ und „Fahrleistung“ stehen jetzt gemeinsam im Block „Pro Monat“']},
+ {v:'1.19', items:['Verlauf neu: Verbrauch mit min/ø/max und WLTP-Linie, dazu eine kompakte Literpreis-Zeile']},
+ {v:'1.18', items:['Neues, ruhigeres Erscheinungsbild in hell und dunkel','Übersicht kompakter; bei fehlendem Wechselkurs werden beide Währungen statt eines Strichs angezeigt']},
+ {v:'1.17', items:['Günstigster/teuerster Literpreis und Tankstellen-Vergleich rechnen ohne Wechselkurs keine Fremdwährungen mehr gegeneinander','Jahres-Hochrechnung erscheint erst, wenn genug Zeitraum vorliegt','Fehlender Wechselkurs wird klar angezeigt statt nur als Strich','Abgelaufene Anmeldung wird als solche gemeldet']},
+ {v:'1.16', items:['Robustere Synchronisierung – offline erfasste Tankungen können nicht mehr doppelt in der Cloud landen']},
+ {v:'1.15', items:['Service-Historie und Service-Ziel werden neu in der Cloud gespeichert und zwischen Geräten synchronisiert','Service-Daten sind jetzt auch im Backup enthalten']},
+ {v:'1.14', items:['Service-Historie wird wieder korrekt dargestellt','CO₂-Überschrift an die übrigen Diagramme angeglichen','Bessere Lesbarkeit kleiner Texte im hellen Design','Kleine Beschriftungs-Korrektur beim Literpreis']},
+ {v:'1.13', items:['Frühere Versionen (1.1–1.3) im Änderungsverlauf ergänzt']},
  {v:'1.12', items:['Änderungsverlauf: Versionsnummer antippen zeigt, was neu ist']},
  {v:'1.11', items:['Dashboard-Reihenfolge frei wählbar (Einstellungen → „Dashboard anordnen")']},
  {v:'1.10', items:['Tank-Kalender als Jahres-Heatmap','Skeleton-Ladeanzeige beim ersten Öffnen','HEIC-Umwandlung auf iOS für die Offline-Nutzung vorgehalten']},
@@ -1982,7 +2025,10 @@ const CHANGELOG=[
  {v:'1.7', items:['Eigener Datumsbereich für Auswertungen','Akzentfarbe wählbar','Vergleich mit dem WLTP-/Werksverbrauch','Fahrleistung je Monat als Balken','Vorschläge beim Erfassen (Währung, Tankstelle)']},
  {v:'1.6', items:['Notiz-Feld je Tankung','Trendlinien in den Diagrammen','Kosten je Monat als Balken','Verbrauchs- und Kostenprognose','Meilenstein-Hinweise (z. B. 50’000 km)']},
  {v:'1.5', items:['Technische Überarbeitung – Stabilität und Barrierefreiheit']},
- {v:'1.4', items:['Dashboard mit Kennzahlen und Zeitraum-Auswahl','Verlaufs-Diagramme für Verbrauch und Literpreis','Statistik, Auswertung und Rekorde','Tankstellen-Vergleich','Jahresreport zum Drucken','CSV-Import/-Export und JSON-Backup','Beleg-Scan per Kamera','Voll-Offline-Betrieb mit Synchronisierung']},
+ {v:'1.4', items:['Dashboard mit Zeitraum-Auswahl (30 Tage / 12 Monate / Gesamt)','Kosten pro 100 km, Ausgaben und Strecke','Verlaufs-Diagramme für Verbrauch und Literpreis','Auswertung: Saison, CO₂ und Ø Ausgaben pro Monat','Tankstellen-Vergleich','Ort-Vorschläge beim Erfassen','Service-Erinnerung','JSON-Backup und -Wiederherstellung','Jahresreport zum Drucken','Teilen-Funktion (Android)']},
+ {v:'1.3', items:['Belegfotos auch per Datei hochladen (zusätzlich zur Kamera)','Design umschaltbar: System, Hell, Dunkel','Technische Überarbeitung und Korrekturen']},
+ {v:'1.2', items:['Tankungen offline bearbeiten und löschen','QR-Code und HEIC-Umwandlung lokal – ohne externe Dienste','Suchfeld mit Verzögerung (Debounce)','Registrierung ausblendbar']},
+ {v:'1.1', items:['Grundversion: Anmeldung mit E-Mail/Passwort (Supabase)','Tankungen erfassen, Statistik-Karte (Ausgaben, Verbrauch, Liter)','Belege per Kamera scannen (automatisches Auslesen)','CSV-Export und QR-Code','Installierbare App (PWA) mit Offline-Start']},
 ];
 function renderChangelog(){ const box=$('#log-body'); if(!box) return; box.innerHTML=CHANGELOG.map((c,i)=>`<div class="log-v"><div class="log-h">Version ${c.v}${i===0?'<span class="log-cur">AKTUELL</span>':''}</div><ul class="log-list">${c.items.map(t=>`<li>${t}</li>`).join('')}</ul></div>`).join(''); }
 { const av=$('#app-ver'); if(av) av.onclick=()=>{ renderChangelog(); const o=$('#log-overlay'); if(o){ o.classList.remove('hidden'); _lastFocus=document.activeElement; setTimeout(()=>{ const x=$('#log-close'); if(x) x.focus(); },50); } }; }

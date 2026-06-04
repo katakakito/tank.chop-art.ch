@@ -15,67 +15,38 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="supabase.min.js"></script>
-<script>(function(){try{var p=localStorage.getItem('tanklog_theme')||'system';var d=(p==='dark')||(p!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.style.colorScheme=d?'dark':'light';var st=localStorage.getItem('tanklog_style')==='cockpit'?'cockpit':'werkstatt';document.documentElement.setAttribute('data-style',st);}catch(e){document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-style','werkstatt');}})();</script>
+<script>(function(){try{var p=localStorage.getItem('tanklog_theme')||'system';var d=(p==='dark')||(p!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <style>
 :root{
-  --bg:#15130d; --bg2:#1e1b14; --bg3:#262218; --line:#2e2a20; --line2:#3a3528;
-  --ink:#ece7db; --muted:#a89e8b; --faint:#9a907c;
+  --bg:#0c0f14; --bg2:#141a23; --bg3:#1b232f; --line:#232c3a; --line2:#313c4d;
+  --ink:#e8edf3; --muted:#9aa7b5; --faint:#76818f;
   --teal:#2dd4bf; --teal-d:#0f766e; --teal-soft:rgba(45,212,191,.13);
-  --pink:#e0a05a; --pink-d:#c98a3d; --pink-soft:rgba(224,160,90,.13);
-  --amber:#e0a05a; --amber-soft:rgba(224,160,90,.13);
+  --pink:#38bdf8; --pink-d:#0ea5e9; --pink-soft:rgba(56,189,248,.13);
+  --amber:#38bdf8; --amber-soft:rgba(56,189,248,.13);
   --red:#f0786f;
   --sans:'Hanken Grotesk',system-ui,sans-serif;
-  --serif:'Fraunces',Georgia,serif;
+  --serif:var(--sans);
   --mono:'JetBrains Mono',monospace;
 }
 /* ---------- Light Mode ---------- */
 :root[data-theme="light"]{
-  --bg:#f4f1ea; --bg2:#fffdf8; --bg3:#f0ece2; --line:#e6e0d3; --line2:#d9d1c0;
-  --ink:#22262c; --muted:#585e66; --faint:#5f656d;
-  --pink:#9a5b1e; --pink-d:#7e4a18; --pink-soft:rgba(154,91,30,.10);
-  --amber:#8f6310; --amber-soft:rgba(143,99,16,.13);
+  --bg:#e9edf3; --bg2:#ffffff; --bg3:#f4f6fa; --line:#e4e8ef; --line2:#d6dce6;
+  --ink:#1f2a37; --muted:#586677; --faint:#8a98a8;
+  --teal:#2563eb; --teal-d:#1d4ed8; --teal-soft:rgba(37,99,235,.10);
+  --pink:#0d9488; --pink-d:#0b7c72; --pink-soft:rgba(13,148,136,.12);
+  --amber:#0d9488; --amber-soft:rgba(13,148,136,.12);
   --red:#cf3a30;
-  --teal-soft:rgba(13,118,110,.12);
 }
-/* Helles Teal ist auf Weiss zu kontrastarm -> Teal als Textfarbe abdunkeln (Flächen bleiben hell) */
-:root[data-theme="light"] .teal,
-:root[data-theme="light"] .stat.big .val,
-:root[data-theme="light"] .chip.v,
-:root[data-theme="light"] .msg.ok,
-:root[data-theme="light"] .scan-status.work,
-:root[data-theme="light"] .scan-status.ok,
-:root[data-theme="light"] .statcard .sv.tealv,
-:root[data-theme="light"] .help a,
-:root[data-theme="light"] .icon-btn:hover,
-:root[data-theme="light"] .tbtn:hover,
-:root[data-theme="light"] .scan-btn:hover{ color:#0f766e; }
 /* fest verdrahtete Flächen für hell */
 :root[data-theme="light"] .top{ background:rgba(255,255,255,.72); }
 :root[data-theme="light"] .overlay{ background:rgba(18,26,31,.42); }
 :root[data-theme="light"] .card{ box-shadow:0 24px 60px -34px rgba(20,40,50,.30); }
-:root[data-theme="light"] body{ background-image:radial-gradient(720px 460px at 108% -8%, rgba(45,212,191,.07), transparent 60%),radial-gradient(680px 520px at -12% 112%, rgba(255,0,170,.05), transparent 60%); }
-/* ---------- Cockpit-Skin (umschaltbar, dunkles Instrument) ---------- */
-:root[data-style="cockpit"]{
-  --bg:#0b0e11; --bg2:#14181c; --bg3:#1b2228; --line:#232a30; --line2:#2f3942;
-  --ink:#eef2f4; --muted:#9aa6ad; --faint:#8b959c;
-  --teal:#ffb02e; --teal-d:#c9821a; --teal-soft:rgba(255,176,46,.13);
-  --pink:#ffb02e; --pink-d:#c9821a; --pink-soft:rgba(255,176,46,.12);
-  --amber:#ffb02e; --amber-soft:rgba(255,176,46,.12); --red:#f0786f;
-  --serif:var(--mono);
-}
-:root[data-style="cockpit"] .teal,:root[data-style="cockpit"] .stat.big .val,:root[data-style="cockpit"] .chip.v,:root[data-style="cockpit"] .statcard .sv.tealv{ color:var(--teal); }
-:root[data-style="cockpit"] .sec-h h2{ text-transform:uppercase; letter-spacing:.04em; font-size:13px; }
-:root[data-style="cockpit"] #field-accent{ display:none; }
-:root[data-style="cockpit"] body{ background-image:none; }
+:root[data-theme="light"] body{ background-image:none; }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{background:var(--bg);color:var(--ink);}
 body{
   font-family:var(--sans);font-size:13.5px;line-height:1.55;-webkit-font-smoothing:antialiased;
   padding:0 0 64px;min-height:100vh;
-  background-image:
-    radial-gradient(720px 460px at 108% -8%, rgba(45,212,191,.10), transparent 60%),
-    radial-gradient(680px 520px at -12% 112%, rgba(255,0,170,.085), transparent 60%);
-  background-attachment:fixed;
 }
 h1,h2,h3,.fr{font-family:var(--serif);font-weight:600;letter-spacing:.1px;}
 .wrap{max-width:560px;margin:0 auto;padding:0 16px;}
@@ -599,12 +570,6 @@ button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visi
         <button data-theme-opt="system" class="on">System</button>
         <button data-theme-opt="light">Hell</button>
         <button data-theme-opt="dark">Dunkel</button>
-      </div>
-    </div>
-    <div class="field"><span class="label">Stil</span>
-      <div class="seg" id="seg-style">
-        <button data-style-opt="werkstatt" class="on">Werkstatt</button>
-        <button data-style-opt="cockpit">Cockpit</button>
       </div>
     </div>
     <div class="field" id="field-accent"><span class="label">Akzentfarbe</span>
@@ -1196,7 +1161,7 @@ function renderForecast(asc, rate){
 // ---------- Kosten je Monat (Balken, letzte 12 Monate, CHF-Äquivalent wenn möglich) ----------
 // aktuelle Akzentfarbe (F3); Standard = Teal
 function cssv(n){ try{ return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888'; }catch(e){ return '#888'; } }
-function accent(){ try{ if(document.documentElement.getAttribute('data-style')==='cockpit') return '#ffb02e'; return localStorage.getItem('tanklog_accent')||'#2dd4bf'; }catch(e){ return '#2dd4bf'; } }
+function accent(){ try{ const s=localStorage.getItem('tanklog_accent'); if(s) return s; return document.documentElement.getAttribute('data-theme')==='light'?'#2563eb':'#2dd4bf'; }catch(e){ return '#2dd4bf'; } }
 // Werksverbrauch / WLTP (L/100 km) oder null
 function wltpVal(){ const n=parseFloat(String(localStorage.getItem('tanklog_wltp')||'').replace(',','.')); return isFinite(n)&&n>0?n:null; }
 // Verbrauchseinheit (F1): intern wird immer in L/100 km gerechnet, hier nur Anzeige
@@ -1407,6 +1372,7 @@ function applyTheme(){
   document.documentElement.style.colorScheme = dark?'dark':'light';
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', dark?'#0b1012':'#eceff1');
   const seg=$('#seg-theme'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.themeOpt===pref));
+  if(typeof applyAccent==='function') applyAccent();
 }
 { const _st=$('#seg-theme'); if(_st) _st.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_theme', b.dataset.themeOpt); applyTheme(); }; }
 if(window.matchMedia){ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ if((localStorage.getItem('tanklog_theme')||'system')==='system') applyTheme(); }); }catch(e){} }
@@ -1425,14 +1391,6 @@ function applyAccent(){
 }
 { const _sa=$('#seg-accent'); if(_sa) _sa.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_accent', b.dataset.accent); applyAccent(); if(!$('#screen-app').classList.contains('hidden')) computeAndRender(); }; }
 applyAccent();
-function applyStyle(){
-  const s=(localStorage.getItem('tanklog_style')==='cockpit')?'cockpit':'werkstatt';
-  document.documentElement.setAttribute('data-style', s);
-  const seg=$('#seg-style'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.styleOpt===s));
-  applyAccent();
-}
-{ const _ss=$('#seg-style'); if(_ss) _ss.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; localStorage.setItem('tanklog_style', b.dataset.styleOpt); applyStyle(); if(!$('#screen-app').classList.contains('hidden')) computeAndRender(); }; }
-applyStyle();
 
 // ---------- Verbrauchseinheit (F1) ----------
 function applyUnitSeg(){ const seg=$('#seg-unit'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.unit===consMode())); }
@@ -2004,9 +1962,10 @@ document.addEventListener('keydown',e=>{
   if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.22 · 2026-06-04'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.23 · 2026-06-05'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 // ---------- Änderungsverlauf / Changelog ----------
 const CHANGELOG=[
+ {v:'1.23', items:['Neues Design: heller Modus „Klar" (ruhiges Blau, klare Flächen) und dunkler Modus „Nacht" (Teal/Sky), durchgehend serifenlose Zahlen','Stil-Umschalter und „Cockpit" entfernt – die App folgt einfach Hell/Dunkel']},
  {v:'1.22', items:['Neuer umschaltbarer Stil „Cockpit“ (dunkles Instrument) – Wechsel in den Einstellungen','Aufgeräumt: QR-Code und Excel-Export entfernt; der CSV-Export bleibt']},
  {v:'1.21', items:['Übersichtlicher: Statistik, Rekorde und Prognose stehen jetzt zusammen im Block „Auswertung“; CO₂ als Zeile','Tank-Kalender (Heatmap) und die separate CO₂-Grafik entfernt']},
  {v:'1.20', items:['Monatswerte zusammengefasst: „Kosten“ und „Fahrleistung“ stehen jetzt gemeinsam im Block „Pro Monat“']},

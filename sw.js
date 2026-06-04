@@ -1,7 +1,7 @@
 // Tank-Log Service Worker – Offline-Shell + frische Updates
 // HTML: network-first (neue Version erscheint nach Push sofort, offline aus Cache)
 // Übrige Dateien (Icons, Bibliotheken): cache-first
-const CACHE='tanklog-v22';
+const CACHE='tanklog-v23';
 const SHELL=['./','./index.html','./supabase.min.js','./manifest.webmanifest'];
 self.addEventListener('install', e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()).catch(()=>{})); });
 self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE && k!=='tanklog-share').map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });

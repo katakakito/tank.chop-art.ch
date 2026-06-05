@@ -964,7 +964,7 @@ function renderMoreStats(asc){
   const avgRange = segKms.length ? segKms.reduce((s,v)=>s+v,0)/segKms.length : null;
   const rows=[
     ['Letzte Tankung', lastTxt,''],
-    ['Ø km / Tankfüllung', avgRange!=null?nf(avgRange,0)+' km':'–','tealv'],
+    ['Ø km zwischen Volltankungen', avgRange!=null?nf(avgRange,0)+' km':'–','tealv'],
     ['Bester / höchster Verbrauch', vs.length?(nf(convCons(Math.min(...vs)),1)+' / '+nf(convCons(Math.max(...vs)),1)+' '+consUnit()):'–','tealv'],
     ['Total getankt', nf(totL,1)+' L',''],
     ['Tankungen', String(fills.length),'']
@@ -989,9 +989,12 @@ function renderInsights(asc, rate){
   const sommer=seas(4,9,false), winter=seas(10,3,true);
   const totL=asc.reduce((s,e)=>s+Number(e.liter),0);
   const km=asc.length>1?asc[asc.length-1].km_stand-asc[0].km_stand:0;
-  const co2kg=totL*CO2_KG_PER_L, gkm = km>0 ? co2kg*1000/km : null;
   let overall=null; { let L=0,K=0; seg.forEach(e=>{ L+=e._v*e._segKm/100; K+=e._segKm; }); overall=K>0?L/K*100:null; }
+  const co2kg=totL*CO2_KG_PER_L;
+  const gkm = (overall!=null) ? overall*CO2_KG_PER_L*10 : (km>0 ? co2kg*1000/km : null);   // konsistent mit der Verbrauchsanzeige
   const rows=[
+    ['Gesamtstrecke (seit Beginn)', km>0?nf(km,0)+' km':'–','tealv'],
+    ['Ø Kosten / km', (totalCHF!=null&&km>0)?('≈ '+nf(totalCHF/km,3)+' CHF/km'):'–','pinkv'],
     ['Ø Ausgaben / Monat', avgMon!=null?('≈ '+nf(avgMon,2)+' CHF'):'–','pinkv'],
     ['Sommer / Winter', (sommer!=null||winter!=null)?((sommer!=null?nf(convCons(sommer),1):'–')+' / '+(winter!=null?nf(convCons(winter),1):'–')+' '+consUnit()):'–','tealv'],
     ['CO₂ (geschätzt)', gkm!=null?('≈ '+nf(gkm,0)+' g/km · '+nf(co2kg,0)+' kg total'):('≈ '+nf(co2kg,0)+' kg total'),'']
@@ -1127,12 +1130,12 @@ function renderRecords(asc, rate){
   const pCHF=e=>e.waehrung==='CHF'?Number(e.literpreis):(!isNaN(rate)?Number(e.literpreis)*rate:Number(e.literpreis));
   let cheap=null,dear=null;
   pool.forEach(e=>{ if(!cheap||pCHF(e)<pCHF(cheap))cheap=e; if(!dear||pCHF(e)>pCHF(dear))dear=e; });
-  let maxL=null; priced.forEach(e=>{ if(!maxL||Number(e.liter)>Number(maxL.liter))maxL=e; });
+  let maxL=null; asc.forEach(e=>{ if(Number(e.liter)>0 && (!maxL||Number(e.liter)>Number(maxL.liter)))maxL=e; });
   let longest=null; asc.filter(e=>e._segKm!=null).forEach(e=>{ if(!longest||e._segKm>longest._segKm)longest=e; });
   const rows=[
     ['Günstigster Literpreis', cheap?(nf(cheap.literpreis,3)+' '+cheap.waehrung+' · '+_fmtDate(cheap.datum)):'–','tealv'],
     ['Teuerster Literpreis', dear?(nf(dear.literpreis,3)+' '+dear.waehrung+' · '+_fmtDate(dear.datum)):'–',''],
-    ['Längste Strecke / Füllung', longest?(nf(longest._segKm,0)+' km · '+_fmtDate(longest.datum)):'–','tealv'],
+    ['Längste Volltank-Strecke', longest?(nf(longest._segKm,0)+' km · '+_fmtDate(longest.datum)):'–','tealv'],
     ['Grösste Tankmenge', maxL?(nf(maxL.liter,2)+' L · '+_fmtDate(maxL.datum)):'–','']
   ];
   box.innerHTML=rows.map(r=>`<div class="srow"><span class="sk">${r[0]}</span><span class="sv ${r[2]}">${r[1]}</span></div>`).join('');
@@ -1204,26 +1207,47 @@ function barsBox(box, keys, vals, color, tipFn, caption){
 function renderCostBars(asc, rate){
   const box=$('#costbars'); if(!box) return;
   if(!asc.length){ box.innerHTML=emptyRow('Noch keine Daten'); return; }
-  const m={}; let mixedNoRate=false;
-  asc.forEach(e=>{ if(!e.datum)return; const k=e.datum.slice(0,7); const o=m[k]=m[k]||{chf:0}; const c=Number(e.total);
-    if(e.waehrung==='CHF') o.chf+=c; else if(!isNaN(rate)) o.chf+=c*rate; else { mixedNoRate=true; o.chf+=c; } });
+  const curSet=[...new Set(asc.filter(e=>e.datum).map(e=>e.waehrung))];
+  const mixedNoRate = curSet.length>1 && isNaN(rate);
+  let dom='CHF';
+  if(mixedNoRate){ const cnt={}; asc.forEach(e=>{ if(e.datum) cnt[e.waehrung]=(cnt[e.waehrung]||0)+Number(e.total); }); dom=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]||'CHF'; }
+  const m={};
+  asc.forEach(e=>{ if(!e.datum) return; if(mixedNoRate && e.waehrung!==dom) return;   // ohne Kurs nicht mischen: nur dominante Währung
+    const k=e.datum.slice(0,7); const c=Number(e.total);
+    m[k]=(m[k]||0) + (e.waehrung==='CHF' ? c : (!isNaN(rate) ? c*rate : c)); });
   let keys=Object.keys(m).sort(); if(keys.length>12) keys=keys.slice(-12);
-  const vals=keys.map(k=>m[k].chf), mx=Math.max(...vals.concat([1]));
+  const vals=keys.map(k=>m[k]), mx=Math.max(...vals.concat([1]));
+  const unit = mixedNoRate ? dom : 'CHF';
   const anyEur=asc.some(e=>e.waehrung!=='CHF');
-  const cap = (mixedNoRate ? 'Summe je Monat · gemischte Währung, Kurs fehlt (unverrechnet)' : ('Summe je Monat · '+(anyEur?'CHF-Äquiv.':'CHF'))) + ' · max '+nf(mx,0)+' CHF';
-  barsBox(box, keys, vals, accent(), (k,v)=>k+': '+nf(v,0)+' CHF', cap);
+  const cap = (mixedNoRate ? ('Summe je Monat · nur '+dom+' (Kurs fehlt)') : ('Summe je Monat · '+(anyEur?'CHF-Äquiv.':'CHF'))) + ' · max '+nf(mx,0)+' '+unit;
+  barsBox(box, keys, vals, accent(), (k,v)=>k+': '+nf(v,0)+' '+unit, cap);
 }
 
-// Fahrleistung je Monat (km zwischen Tankungen, dem Monat der späteren Tankung zugeordnet)
+// Strecke dk taganteilig über die Monate zwischen d0 und d1 verteilen (saubere Monatsgrenzen)
+function addKmSplit(m, d0, d1, dk){
+  if(!d0 && !d1) return;
+  if(!d0 || !d1){ const k=(d1||d0).slice(0,7); m[k]=(m[k]||0)+dk; return; }
+  const t0=new Date(d0+'T00:00:00'), t1=new Date(d1+'T00:00:00'); const span=t1-t0;
+  if(!(span>0)){ const k=d1.slice(0,7); m[k]=(m[k]||0)+dk; return; }
+  let cur=new Date(t0);
+  while(cur<t1){
+    const next=new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    const end = next<t1 ? next : t1;
+    const k=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0');
+    m[k]=(m[k]||0) + dk*((end-cur)/span);
+    cur=end;
+  }
+}
+// Fahrleistung je Monat (km zwischen Tankungen, taggenau über Monatsgrenzen verteilt)
 function renderKmBars(asc){
   const box=$('#kmbars'); if(!box) return;
   if(asc.length<2){ box.innerHTML=emptyRow('Mehr Tankungen nötig'); return; }
   const m={};
-  for(let i=1;i<asc.length;i++){ const d=asc[i].datum; if(!d) continue; const dk=asc[i].km_stand-asc[i-1].km_stand; if(dk<=0) continue; const k=d.slice(0,7); m[k]=(m[k]||0)+dk; }
+  for(let i=1;i<asc.length;i++){ const dk=asc[i].km_stand-asc[i-1].km_stand; if(dk<=0) continue; addKmSplit(m, asc[i-1].datum, asc[i].datum, dk); }
   let keys=Object.keys(m).sort(); if(keys.length>12) keys=keys.slice(-12);
   if(!keys.length){ box.innerHTML=emptyRow('Mehr Tankungen nötig'); return; }
   const vals=keys.map(k=>m[k]), mx=Math.max(...vals.concat([1]));
-  barsBox(box, keys, vals, accent(), (k,v)=>k+': '+nf(v,0)+' km', 'km je Monat · max '+nf(mx,0)+' km');
+  barsBox(box, keys, vals, accent(), (k,v)=>k+': '+nf(v,0)+' km', 'km je Monat · taggenau verteilt · max '+nf(mx,0)+' km');
 }
 
 // (CO₂-Karte und Tank-Kalender entfernt – CO₂ steht als Zeile in der Auswertung)
@@ -1668,7 +1692,9 @@ function validateForm(v){
     if(!editingId){ const maxKm=Math.max(...others.map(e=>e.km_stand)); if(v.km<=maxKm) warnings.push('Der KM-Stand ('+nf(v.km,0)+') ist nicht höher als der bisher höchste ('+nf(maxKm,0)+').'); }
     if(others.some(e=>e.km_stand===v.km)) warnings.push('Es gibt bereits eine Tankung mit demselben KM-Stand ('+nf(v.km,0)+') – evtl. ein Doppeleintrag?');
     const fulls=others.filter(e=>e.vollgetankt && e.km_stand<v.km);
-    if(v.voll && fulls.length){ const pf=Math.max(...fulls.map(e=>e.km_stand)); const dist=v.km-pf; if(dist>0){ const vb=v.liter/dist*100; if(vb<PLAUS_MIN||vb>PLAUS_MAX) warnings.push('Das ergäbe '+nf(vb,1)+' L/100 km – bitte KM-Stand und Tankmenge prüfen.'); } }
+    if(v.voll && fulls.length){ const pf=Math.max(...fulls.map(e=>e.km_stand)); const dist=v.km-pf;
+      const between=others.filter(e=>e.km_stand>pf && e.km_stand<v.km).reduce((s,e)=>s+Number(e.liter||0),0);   // Teiltankungen seit letzter Volltankung mitzählen
+      if(dist>0){ const vb=(v.liter+between)/dist*100; if(vb<PLAUS_MIN||vb>PLAUS_MAX) warnings.push('Das ergäbe '+nf(vb,1)+' L/100 km – bitte KM-Stand und Tankmenge prüfen.'); } }
   }
   return {errors,warnings};
 }
@@ -1976,9 +2002,10 @@ document.addEventListener('keydown',e=>{
   if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.24 · 2026-06-05'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.25 · 2026-06-05'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 // ---------- Änderungsverlauf / Changelog ----------
 const CHANGELOG=[
+ {v:'1.25', items:['Auswertung neu: Gesamtstrecke seit erstem Eintrag und Ø Kosten pro km','Plausibilitäts-Warnung berücksichtigt jetzt Teiltankungen','CO₂ g/km basiert auf dem Voll-zu-Voll-Verbrauch','Monats-Kosten ohne Kurs nicht mehr währungsgemischt (nur dominante Währung)','km je Monat taggenau über Monatsgrenzen verteilt','Beschriftungen präzisiert (Volltank-Strecken)']},
  {v:'1.24', items:['Desktop-Ansicht: ab Tablet/Desktop nutzt die App die volle Breite – KPIs in einer Reihe, Dashboard in zwei Spalten, Dialoge als zentrierte Fenster (am Handy unverändert)']},
  {v:'1.23', items:['Neues Design: heller Modus „Klar" (ruhiges Blau, klare Flächen) und dunkler Modus „Nacht" (Teal/Sky), durchgehend serifenlose Zahlen','Stil-Umschalter und „Cockpit" entfernt – die App folgt einfach Hell/Dunkel']},
  {v:'1.22', items:['Neuer umschaltbarer Stil „Cockpit“ (dunkles Instrument) – Wechsel in den Einstellungen','Aufgeräumt: QR-Code und Excel-Export entfernt; der CSV-Export bleibt']},

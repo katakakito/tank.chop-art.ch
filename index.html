@@ -314,6 +314,20 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:20px 0;}
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
 button:focus-visible,.seg button:focus-visible,.x:focus-visible,.tbtn:focus-visible,.icon-btn:focus-visible,.add-btn:focus-visible,.save-btn:focus-visible,.ghost:focus-visible,.scan-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:10px;}
 .inp:focus-visible,.search:focus-visible{outline:none;}
+
+/* ============ Desktop / Tablet — am Handy unverändert ============ */
+@media (min-width:960px){
+  #screen-app .wrap{ max-width:1180px; padding-left:24px; padding-right:24px; }
+  #hero{ grid-template-columns:repeat(4,1fr); gap:12px; }
+  #screen-app .add-btn{ max-width:300px; }
+  #dash-sections{ column-count:2; column-gap:26px; }
+  #dash-sections > .dash-sec{ -webkit-column-break-inside:avoid; break-inside:avoid; }
+  .overlay{ align-items:center; padding:24px 16px; }
+  .sheet{ border-radius:18px; border-bottom:1px solid var(--line2); max-height:86vh; animation:fadeUp .24s both; }
+}
+@media (min-width:1280px){
+  #screen-app .wrap{ max-width:1280px; }
+}
 </style>
 </head>
 <body>
@@ -1962,9 +1976,10 @@ document.addEventListener('keydown',e=>{
   if(!$('#add-overlay').classList.contains('hidden')){ closeSheet($('#add-overlay')); return; }
   if(!$('#set-overlay').classList.contains('hidden')){ closeSheet($('#set-overlay')); return; }
 });
-const APP_VER='v1.23 · 2026-06-05'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
+const APP_VER='v1.24 · 2026-06-05'; { const _v=$('#app-ver'); if(_v) _v.textContent=APP_VER; }
 // ---------- Änderungsverlauf / Changelog ----------
 const CHANGELOG=[
+ {v:'1.24', items:['Desktop-Ansicht: ab Tablet/Desktop nutzt die App die volle Breite – KPIs in einer Reihe, Dashboard in zwei Spalten, Dialoge als zentrierte Fenster (am Handy unverändert)']},
  {v:'1.23', items:['Neues Design: heller Modus „Klar" (ruhiges Blau, klare Flächen) und dunkler Modus „Nacht" (Teal/Sky), durchgehend serifenlose Zahlen','Stil-Umschalter und „Cockpit" entfernt – die App folgt einfach Hell/Dunkel']},
  {v:'1.22', items:['Neuer umschaltbarer Stil „Cockpit“ (dunkles Instrument) – Wechsel in den Einstellungen','Aufgeräumt: QR-Code und Excel-Export entfernt; der CSV-Export bleibt']},
  {v:'1.21', items:['Übersichtlicher: Statistik, Rekorde und Prognose stehen jetzt zusammen im Block „Auswertung“; CO₂ als Zeile','Tank-Kalender (Heatmap) und die separate CO₂-Grafik entfernt']},
